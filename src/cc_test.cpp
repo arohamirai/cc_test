@@ -1,4 +1,6 @@
 #include "boost/variant.hpp"
+#include "boost/shared_ptr.hpp"
+#include <boost/make_shared.hpp>
 #include <iostream>
 #include <string>
 
@@ -46,26 +48,20 @@ public:
 
 
 
-
-
-
 int main(int argc, char **argv)
 {
-//    boost::variant< int, std::string > u("hello world");
-//    std::cout << u<<std::endl; // output: hello world
 
-//    int result = boost::apply_visitor( my_visitor(), u );
-//    std::cout << result << std::endl; // output: 11 (i.e., length of "hello world")
+    boost::shared_ptr<int> x = boost::make_shared<int>(4);
 
-    DepriveClass a ;
-    DepriveClass1 b;
-    boost::variant< DepriveClass, DepriveClass1> u;
+    boost::shared_ptr<DepriveClass> a = boost::make_shared<DepriveClass>();
+    boost::shared_ptr<DepriveClass1> b = boost::make_shared<DepriveClass1>();
+    boost::variant< boost::shared_ptr<DepriveClass>, boost::shared_ptr<DepriveClass1>> u;
 
     u = a;
-    boost::get<DepriveClass>(u).print(10);
+    boost::get<boost::shared_ptr<DepriveClass>>(u)->print(10);
 
     u = b;
-    boost::get<DepriveClass1>(u).print("hello world");
+    boost::get<boost::shared_ptr<DepriveClass1>>(u)->print("hello world");
 
 
 
