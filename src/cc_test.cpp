@@ -51,17 +51,17 @@ public:
 int main(int argc, char **argv)
 {
 
-    boost::shared_ptr<int> x = boost::make_shared<int>(4);
+    std::shared_ptr<int> x = std::make_shared<int>(4);
 
-    boost::shared_ptr<DepriveClass> a = boost::make_shared<DepriveClass>();
-    boost::shared_ptr<DepriveClass1> b = boost::make_shared<DepriveClass1>();
-    boost::variant< boost::shared_ptr<DepriveClass>, boost::shared_ptr<DepriveClass1>> u;
+    std::shared_ptr<DepriveClass> a = std::make_shared<DepriveClass>();
+    std::shared_ptr<DepriveClass1> b = std::make_shared<DepriveClass1>();
+    boost::variant< std::shared_ptr<DepriveClass>, std::shared_ptr<DepriveClass1>> u;
 
     u = a;
-    boost::get<boost::shared_ptr<DepriveClass>>(u)->print(10);
+    boost::get<std::shared_ptr<DepriveClass>>(u)->print(10);
 
     u = b;
-    boost::get<boost::shared_ptr<DepriveClass1>>(u)->print("hello world");
+    boost::get<std::shared_ptr<DepriveClass1>>(u)->print("hello world");
 
 
 
