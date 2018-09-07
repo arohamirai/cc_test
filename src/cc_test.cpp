@@ -50,13 +50,26 @@ public:
 
 };
 
-class my_visitor : public boost::static_visitor<int>
+class result
 {
 public:
+    result(){};
+    ~result(){};
+public:
+    bool valid;
+    int value;
+};
+class my_visitor : public boost::static_visitor<result>
+{
+
+public:
     template<typename T>
-    int operator()(T x) const
+    result operator()(T x) const
     {
-        return x->print();
+        result r;
+        r.valid = x->print();
+        r.value = 3;
+        return r;
     }
 };
 
@@ -67,15 +80,15 @@ int main(int argc, char **argv)
     std::shared_ptr<DepriveClass1> b = std::make_shared<DepriveClass1>("s");
     boost::variant< std::shared_ptr<DepriveClass>, std::shared_ptr<DepriveClass1>> u;
 
-    int result = 0;
+   result r;
 
     u = a;
-    result = boost::apply_visitor( my_visitor(), u );
-    std::cout<<"result:"<<result<<std::endl;
+    r = boost::apply_visitor( my_visitor(), u);
+    std::cout<<"result:"<<r.valid<<std::endl;
 
     u = b;
-    result = boost::apply_visitor( my_visitor(), u );
-    std::cout<<"result:"<<result<<std::endl;
+    r = boost::apply_visitor( my_visitor(), u );
+    std::cout<<"result:"<<r.valid<<std::endl;
 
     return 0;
 }
