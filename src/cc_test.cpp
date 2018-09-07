@@ -11,7 +11,9 @@ public:
     BaseClass(){};
     virtual ~BaseClass() = 0;
 
-    virtual void print(T x) = 0;
+    virtual int print() = 0;
+
+    T t;
 };
 
 template<class T>
@@ -23,12 +25,13 @@ BaseClass<T>::~BaseClass()
 class DepriveClass:public BaseClass<int>
 {
 public:
-    DepriveClass(){};
+    DepriveClass(int a){};
     ~DepriveClass(){};
 
-    virtual void print(int x)
+    virtual int print()
     {
-        std::cout<<"DepriveClass:"<<x<<std::endl;
+        std::cout<<"DepriveClass:"<<std::endl;
+        return 0;
     }
 
 };
@@ -36,34 +39,43 @@ public:
 class DepriveClass1:public BaseClass<std::string>
 {
 public:
-    DepriveClass1(){};
+    DepriveClass1(std::string s){};
     ~DepriveClass1(){};
 
-    virtual void print(std::string x)
+    virtual int print()
     {
-        std::cout<<"DepriveClass1:"<<x<<std::endl;
+        std::cout<<"DepriveClass1:"<<std::endl;
+        return 1;
     }
 
 };
 
+class my_visitor : public boost::static_visitor<int>
+{
+public:
+    template<typename T>
+    int operator()(T x) const
+    {
+        return x->print();
+    }
+};
 
 
 int main(int argc, char **argv)
 {
-
-    std::shared_ptr<int> x = std::make_shared<int>(4);
-
-    std::shared_ptr<DepriveClass> a = std::make_shared<DepriveClass>();
-    std::shared_ptr<DepriveClass1> b = std::make_shared<DepriveClass1>();
+    std::shared_ptr<DepriveClass> a = std::make_shared<DepriveClass>(1);
+    std::shared_ptr<DepriveClass1> b = std::make_shared<DepriveClass1>("s");
     boost::variant< std::shared_ptr<DepriveClass>, std::shared_ptr<DepriveClass1>> u;
 
+    int result = 0;
+
     u = a;
-    boost::get<std::shared_ptr<DepriveClass>>(u)->print(10);
+    result = boost::apply_visitor( my_visitor(), u );
+    std::cout<<"result:"<<result<<std::endl;
 
     u = b;
-    boost::get<std::shared_ptr<DepriveClass1>>(u)->print("hello world");
-
-
+    result = boost::apply_visitor( my_visitor(), u );
+    std::cout<<"result:"<<result<<std::endl;
 
     return 0;
 }
