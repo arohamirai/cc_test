@@ -1,0 +1,611 @@
+{
+  "dictCategory": {
+    "0": "0"
+  },
+  "dictEvent": {
+    "0": "0",
+    "1": "1"
+  },
+  "directActions": [
+    "后退03_前进03",
+    "wait",
+    "前进03_后退03",
+    "左转30_右转60",
+    "后退07_前进03",
+    "左转30",
+    "stopCharge",
+    "charge"
+  ],
+  "nodes": [
+    {
+      "iD": 1,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -3.4453750584822167,
+        2.1621903387186654,
+        0,
+        0,
+        0,
+        -0.02706123148346844,
+        0.9996337768175008
+      ],
+      "allowedActions": [
+        "前进03_后退03",
+        "就是要充电哼唧",
+        "charge"
+      ],
+      "name": "产线021自动充电桩",
+      "desc": "充电位",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": true,
+      "chargePort": true,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 0.9028516255519939,
+          "x": -1.0378171511878636,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0.008645928504860963,
+          "w": 0.9999626232616341
+        }
+      }
+    },
+    {
+      "iD": 2,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -4.809623215258934,
+        1.0140479393889408,
+        0,
+        0,
+        0,
+        -0.7319017797731227,
+        0.6814101411550468
+      ],
+      "allowedActions": [
+        "左转30_右转60",
+        "后退03_前进03",
+        "charge"
+      ],
+      "name": "产线138没有桩",
+      "desc": "会议室旁",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": true,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": -0.33971704558847976,
+          "x": -2.3166553447352376,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": -0.7071067811865475,
+          "w": 0.7071067811865476
+        }
+      }
+    },
+    {
+      "iD": 3,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -8.007811557365965,
+        1.154149076846095,
+        0,
+        0,
+        0,
+        -0.03570298217103584,
+        0.9993624442947782
+      ],
+      "allowedActions": [
+        "前进03_后退03"
+      ],
+      "name": "产线000",
+      "desc": "会议室旁墙壁走道",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": -0.42819720835552105,
+          "x": -5.51668789814317,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0,
+          "w": 1
+        }
+      }
+    },
+    {
+      "iD": 4,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -3.3035280096623945,
+        5.578858894719713,
+        0,
+        0,
+        0,
+        -0.7319017797731227,
+        0.6814101411550468
+      ],
+      "allowedActions": [
+        "前进03_后退03"
+      ],
+      "name": "产线010没有桩",
+      "desc": "岔路口",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": true,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 4.320931987982219,
+          "x": -1.1401466977362549,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": -0.7071067811865475,
+          "w": 0.7071067811865476
+        }
+      }
+    },
+    {
+      "iD": 5,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -0.8238745838165089,
+        6.302609393979495,
+        0,
+        0,
+        0,
+        0.026463835548768033,
+        0.9996497703755723
+      ],
+      "allowedActions": [
+        "左转30_右转60"
+      ],
+      "name": "load",
+      "desc": "实验室门口\n",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 5.219786514940509,
+          "x": 1.2815379411243724,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0.06213744155632932,
+          "w": 0.9980676020975903
+        }
+      }
+    },
+    {
+      "iD": 6,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -10.170434217147394,
+        2.146986083887308,
+        0,
+        0,
+        0,
+        0.6868950031512381,
+        0.7267566655141487
+      ],
+      "allowedActions": [
+        "后退03_前进03"
+      ],
+      "name": "其它",
+      "desc": "无描述",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 0.4077829543667612,
+          "x": -7.7446464488947475,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0.7124044530243525,
+          "w": 0.7017691182369549
+        }
+      }
+    },
+    {
+      "iD": 7,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -11.314074328517892,
+        5.9229540382225645,
+        0,
+        0,
+        0,
+        -0.03570298217103584,
+        0.9993624442947782
+      ],
+      "allowedActions": [],
+      "name": "产线015a",
+      "desc": "无描述",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 4.092513787667785,
+          "x": -9.154825695239262,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0,
+          "w": 1
+        }
+      }
+    },
+    {
+      "iD": 8,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -7.02110088817421,
+        6.053301510651838,
+        0,
+        0,
+        0,
+        0.9999222307790173,
+        0.012471182738139632
+      ],
+      "allowedActions": [],
+      "name": "产线012",
+      "desc": "无描述",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 4.528877424031419,
+          "x": -4.882098422511991,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": -0.999729985065484,
+          "w": 0.023236974006247708
+        }
+      }
+    },
+    {
+      "iD": 9,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -8.98751811008922,
+        6.1594124972655635,
+        0,
+        0,
+        0,
+        -0.03570298217103584,
+        0.9993624442947782
+      ],
+      "allowedActions": [],
+      "name": "产线020",
+      "desc": "无描述",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 4.494393493638636,
+          "x": -6.851074583264379,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": 0,
+          "w": 1
+        }
+      }
+    },
+    {
+      "iD": 10,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -6.995928367257976,
+        6.753938286219646,
+        0,
+        0,
+        0,
+        -0.7319017797731228,
+        0.6814101411550467
+      ],
+      "allowedActions": [],
+      "name": "到不了的点",
+      "desc": "到不了的点",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": false,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": 5.229524317026126,
+          "x": -4.906987824795116,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": -0.7071067811865475,
+          "w": 0.7071067811865476
+        }
+      }
+    },
+    {
+      "iD": 11,
+      "categoryID": "0",
+      "eventList": [
+        "0"
+      ],
+      "pose": [
+        -11.77404560020493,
+        1.4341868404050477,
+        0,
+        0,
+        0,
+        -0.7319017797731228,
+        0.6814101411550467
+      ],
+      "allowedActions": [],
+      "name": "手动充电点附近",
+      "desc": "无描述",
+      "baseOnMark": -1,
+      "areaGroup": "",
+      "relocation": true,
+      "chargePort": false,
+      "through": false,
+      "navMinRadius": 0.5,
+      "tol": {
+        "d": 0.05,
+        "r": 0.05
+      },
+      "atMap": 0,
+      "worldPose": {
+        "position": {
+          "y": -0.41763349065733096,
+          "x": -9.293303914649037,
+          "z": 0
+        },
+        "orientation": {
+          "y": 0,
+          "x": 0,
+          "z": -0.7071067811865475,
+          "w": 0.7071067811865476
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "iDdest": 2,
+      "iDsource": 1,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.08915441699342935,
+      "width": 0.7
+    },
+    {
+      "iDdest": 4,
+      "iDsource": 1,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.17098058881147837,
+      "width": 0.7
+    },
+    {
+      "iDdest": 5,
+      "iDsource": 4,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.1291558743411129,
+      "width": 0.7
+    },
+    {
+      "iDdest": 3,
+      "iDsource": 2,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.16006277738807495,
+      "width": 0.7
+    },
+    {
+      "iDdest": 6,
+      "iDsource": 3,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.11898174372915625,
+      "width": 0.7
+    },
+    {
+      "iDdest": 4,
+      "iDsource": 8,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.18738625893409178,
+      "width": 0.7
+    },
+    {
+      "iDdest": 8,
+      "iDsource": 9,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.09846390535453269,
+      "width": 0.7
+    },
+    {
+      "iDdest": 7,
+      "iDsource": 9,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.1169270764621772,
+      "width": 0.7
+    },
+    {
+      "iDdest": 11,
+      "iDsource": 6,
+      "unidirected": false,
+      "narrow": false,
+      "max_trans_speed": 0.7,
+      "max_rot_speed": 0.5,
+      "safe_obstacle_dist": 0.7,
+      "distance": 0.08774469006658903,
+      "width": 0.7
+    }
+  ]
+}
