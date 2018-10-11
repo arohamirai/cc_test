@@ -12,13 +12,12 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    ifstream json_file_in("../file/info_WorldRefer.json", ios::binary);
-    ofstream json_file_out("../file/info_WorldRefer_out.json", ios::binary);
+    // 读写同一文件
+    fstream json_file_in("../file/info_WorldRefer.json", std::ios_base::in | std::ios_base::out | std::ios::binary);
 
-    Json::Reader reader(Json::Features::strictMode());
-    Json::StyledWriter writer;
+    Json::CharReaderBuilder  builder;
+    Json::StreamWriterBuilder writer;
     Json::Value root;
-
 
     if(!json_file_in.is_open())
     {
@@ -26,7 +25,9 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    if(reader.parse(json_file_in, root))
+    JSONCPP_STRING errs;
+
+    if(Json::parseFromStream(builder, json_file_in, &root, &errs))
     {
         cout << "nodes:" << endl;
         for(unsigned int i = 0; i < root["nodes"].size(); i++)
@@ -34,7 +35,8 @@ int main(int argc, char **argv)
             // 修改json字段
             for(unsigned int j = 0; j < root["nodes"][i]["pose"].size(); j++)
             {
-                root["nodes"][i]["pose"][j] = 0;
+                root["nodes"][i]["pose"][j] = j;
+                cout<<root["nodes"][i]["pose"][j]<<endl;
             }
 
             // 读json字段
@@ -51,13 +53,18 @@ int main(int argc, char **argv)
             cout<<"==========================="<<endl;
         }
     }
+    else
+    {
+        cout<<"parseFromStream error: "<<errs<<endl;
+    }
 
-    // 写json文件
-    string str_out = writer.write(root);
-    json_file_out << str_out;
+    json_file_in.clear();  // clear flag
+    json_file_in.seekg(0); // move to beginning
 
+    // 写json文件, writer 可以设置写的格式，比如字段建用空格还是换行符分隔
+    string str_out = Json::writeString(writer, root);
+    json_file_in << str_out;
     json_file_in.close();
-    json_file_out.close();
 
     return 0;
 }
