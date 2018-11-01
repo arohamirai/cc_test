@@ -26,5 +26,6 @@ ${Boost_LIBRARIES}
 ${OpenCV_LIBS}
 ${VISP_LIBRARIES}
 jsoncpp
+boost_timer
 )
 
