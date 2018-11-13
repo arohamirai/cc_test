@@ -10,6 +10,7 @@ find_package(Boost REQUIRED)
 Find_Package(Eigen3 REQUIRED)
 find_package(VISP REQUIRED)
 find_package( OpenCV REQUIRED )
+find_package( Ceres REQUIRED )
 # 官方没有提供.cmake文件，https://github.com/thewtex/jsoncpp-config-cmake 仓库提供了一个.cmake文件
 #find_package(jsoncpp REQUIRED)
 Find_Package(G2O REQUIRED)
@@ -27,6 +28,7 @@ ${EIGEN3_INCLUDE_DIR}
 ${OpenCV_INCLUDE_DIRS}
 ${VISP_INCLUDE_DIRS}
 ${G2O_INCLUDE_DIRS}
+${CERES_INCLUDE_DIRS}
 )
 
 add_executable(cc_test src/cc_test.cpp)
@@ -35,6 +37,7 @@ ${Boost_LIBRARIES}
 ${OpenCV_LIBS}
 ${VISP_LIBRARIES}
 ${G2O_LIBS}
+${CERES_LIBRARIES}
 ${CHOLMOD_LIBRARIES}
 jsoncpp
 boost_timer
