@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
     // 读写同一文件
-    ifstream json_file_in("../file/info_WorldRefer.json", std::ios::binary);
+    fstream json_file_in("../file/info_WorldRefer.json", std::ios_base::in | std::ios_base::out | std::ios::binary);
 
     Json::CharReaderBuilder  builder;
     Json::StreamWriterBuilder writer;
@@ -58,14 +58,13 @@ int main(int argc, char **argv)
         cout<<"parseFromStream error: "<<errs<<endl;
     }
 
-    json_file_in.close();
-
-    ofstream json_file_out("../file/info_WorldRefer.json", std::ios::binary | std::ios::trunc);
+    json_file_in.clear();  // clear flag
+    json_file_in.seekg(0); // move to beginning
 
     // 写json文件, writer 可以设置写的格式，比如字段建用空格还是换行符分隔
     string str_out = Json::writeString(writer, root);
-    json_file_out << str_out;
-    json_file_out.close();
+    json_file_in << str_out;
+    json_file_in.close();
 
     return 0;
 }
