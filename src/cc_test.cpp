@@ -1,75 +1,79 @@
 #include <iostream>
-#include <opencv2/core/core.hpp>
-#include <ceres/ceres.h>
-#include <chrono>
+#include <opencv2/opencv.hpp>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpVelocityTwistMatrix.h>
+#include <visp3/gui/vpPlot.h>
+#include <visp3/robot/vpSimulatorPioneer.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeatureDepth.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/vs/vpServo.h>
+
 
 using namespace std;
 
-// 代价函数计算模型
-struct CURVE_FITTING_COST
-{
-  CURVE_FITTING_COST(double x, double y) : _x(x), _y(y){}
-  //残差的计算
-  template <typename T>
-  bool operator ()  (
-      const T* const abc,             // 模型参数，有3维
-      T* residual ) const             //残差
-  {
-    // y - exp(ax^2 + bx + c)
-    residual[0] = T(_y) - ceres::exp(abc[0] * T(_x) * T(_x) + abc[1] * T(_x) + abc[2]);
-    return true;
-  }
 
-  const double _x, _y;                // x, y数据
-};
 
 int main(int argc, char **argv)
 {
-  double a = 1.0, b = 2.0, c = 1.0; // 真实参数值
-  int N = 100;                      // 数据点个数(样本点)
-  double w_sigma = 1.0;             // 噪声Sigma值
-  cv::RNG rng;                      // OpenCV随机数产生器
-  double abc[3] = {0, 0, 0};        // abc参数的估计值（初始值）
+  vpHomogeneousMatrix cdMo;
+  cdMo[0][3] = 0.0;  // x
+  cdMo[1][3] = 0.0;  // y
+  cdMo[2][3] = 1.;  // z
 
-  vector<double> x_data, y_data;            // 样本数据
-  cout << "generating data: " << endl;
-  for(int i = 0; i <N; i++)
+  vpHomogeneousMatrix cMo;
+  cMo[0][3] = 0.3;         // x
+  cMo[1][3] = cdMo[1][3];  // y
+  cMo[2][3] = 10.;         // z
+  vpRotationMatrix cRo(0, atan2(cMo[0][3], cMo[1][3]), 0);   // rot_y
+  cMo.insert(cRo);
+
+  vpFeaturePoint3D feature_x_z_;
+  vpFeaturePoint3D feature_x_z_d_;
+  feature_x_z_.buildFrom(cMo[0][3], cMo[1][3], cMo[2][3]);
+  feature_x_z_d_.buildFrom(cdMo[0][3], cdMo[1][3], cdMo[2][3]);
+
+  vpSimulatorPioneer robot;
+  robot.setSamplingTime(0.04);
+  vpHomogeneousMatrix wMc, wMo;
+  robot.getPosition(wMc);
+  wMo = wMc * cMo;
+
+  vpServo task;
+  task.setServo(vpServo::EYEINHAND_L_cVe_eJe);
+  task.setInteractionMatrixType(vpServo::DESIRED, vpServo::PSEUDO_INVERSE);
+  task.setLambda(0.2);
+  task.addFeature(feature_x_z_, feature_x_z_d_, vpFeaturePoint3D::selectX() | vpFeaturePoint3D::selectZ());
+
+  vpVelocityTwistMatrix cVe;
+  cVe = robot.get_cVe();
+  task.set_cVe(cVe);
+
+  vpMatrix eJe;
+  robot.get_eJe(eJe);
+  task.set_eJe(eJe);
+
+  vpColVector v;
+  int n = 0;
+  // cMo
+  while(true)
   {
-    double x = i / 100.0;
-    x_data.push_back(x);
-    y_data.push_back(exp(a * x * x + b * x + c) + rng.gaussian(w_sigma));
+    robot.getPosition(wMc);
+    cMo = wMc.inverse() * wMo;
+
+    feature_x_z_.buildFrom(cMo[0][3], cMo[1][3], cMo[2][3]);
+
+    v = task.computeControlLaw();
+
+    robot.setVelocity(vpRobot::ARTICULAR_FRAME, v);
+
+    double error = task.getError().sumSquare();
+    std::cout << "n: " << n++ << " v: " << v[0] <<" " << v[1] << " error: " << error << std::endl;
+
+    if (error < 0.0001) {
+        std::cout << "Reached a small error. We stop the loop... " << std::endl;
+        break;
+    }
   }
-
-  // 构建最小二乘问题
-  ceres::Problem problem;
-  for(int i = 0; i < N; i++)
-  {
-    problem.AddResidualBlock(    // 向问题中添加误差项
-          // 使用自动求导， 模板参数： 误差类型， 输出维度，输入维度
-          new ceres::AutoDiffCostFunction<CURVE_FITTING_COST, 1, 3>(
-            new CURVE_FITTING_COST(x_data[i], y_data[i])),
-          nullptr,
-          abc
-          );
-  }
-
-  // 配置求解器
-  ceres::Solver::Options options;                       // 这里有许多配置可填
-  options.linear_solver_type = ceres::DENSE_QR;         // 增量方程如何求解
-  options.minimizer_progress_to_stdout = true;          // 输出到cout
-
-  ceres::Solver::Summary summary;                       // 优化信息
-  chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-  ceres::Solve(options, &problem, &summary);            // 开始优化
-  chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
-  chrono::duration<double> time_used = chrono::duration_cast<chrono::duration<double>>(t2 - t1);
-  cout << "solve time cost = " << time_used.count() << " seconds. " <<endl;
-
-  // 输出结果
-  cout << summary.BriefReport() << endl;
-  cout << "estimate a, b, c = ";
-  for(auto a:abc)   cout << a << " ";
-  cout << endl;
-
   return 0;
 }
