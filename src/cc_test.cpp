@@ -8,6 +8,7 @@
 #include <visp3/visual_features/vpFeatureDepth.h>
 #include <visp3/visual_features/vpFeaturePoint.h>
 #include <visp3/vs/vpServo.h>
+#include "NewServo.h"
 
 
 using namespace std;
@@ -34,6 +35,8 @@ int main(int argc, char **argv)
     feature_x_z_d_.buildFrom(cdMo[0][3], cdMo[1][3], cdMo[2][3]);
 
     vpSimulatorPioneer robot;
+    vpHomogeneousMatrix cMe;
+    robot.vpUnicycle::set_cMe(cMe);
     robot.setSamplingTime(0.04);
     vpHomogeneousMatrix wMc, wMo;
     robot.getPosition(wMc);
@@ -41,7 +44,7 @@ int main(int argc, char **argv)
 
     vpServo task;
     task.setServo(vpServo::EYEINHAND_L_cVe_eJe);            // 应为用的是cMo 特征，发的速度确是相对于End-effector的，所以需要cam到end-effector的变换（速度变换和雅克比变换）
-    task.setInteractionMatrixType(vpServo::MEAN, vpServo::PSEUDO_INVERSE);
+    //task.setInteractionMatrixType(vpServo::MEAN, vpServo::PSEUDO_INVERSE);
     task.setLambda(0.2);
     task.addFeature(feature_x_z_, feature_x_z_d_);  //, vpFeaturePoint3D::selectX() | vpFeaturePoint3D::selectZ()
 
@@ -77,21 +80,6 @@ int main(int argc, char **argv)
         feature_x_z_.buildFrom(cMo[0][3], cMo[1][3], cMo[2][3]);
 
         v = task.computeControlLaw();
-        vpColVector v_full;
-        v_full.resize(6, 1);
-        v_full[0] = v[0];
-        v_full[1] = 0.;
-        v_full[2] = 0.;
-        v_full[3] = 0.;
-        v_full[4] = 0.;
-        v_full[5] = v[1];
-
-        vpColVector v_cam = cVe * v_full;
-
-        vpColVector::saveYAML("v.dat", v_full);
-        vpColVector::saveYAML("v_cam.dat", v_cam);
-
-        break;
 
         robot.setVelocity(vpRobot::ARTICULAR_FRAME, v);
         graph.plot(0, n, v);
