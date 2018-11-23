@@ -30,9 +30,10 @@ int main(int argc, char **argv)
     vpFeaturePoint3D s[3];
     vpFeaturePoint3D s_star[3];
 
-    vpHomogeneousMatrix wMc(4, 0.1, -0.1, -1.57, 0, -1.57);
+    vpHomogeneousMatrix wMc(4, 0.1, -0.1, 0, M_PI / 2, 0);
     vpHomogeneousMatrix cMw;
     vpHomogeneousMatrix cdMc;
+    //vpHomogeneousMatrix::saveYAML("a.dat", wMc);
 
     vpSimulatorCamera robot;
     double period = 0.1;
@@ -40,7 +41,6 @@ int main(int argc, char **argv)
 
     cMw = wMc.inverse();
     for (int (i) = 0; (i) < 3; ++(i)) {
-        cout <<"i:" << i << endl;
         cP[i] = cMw * oP[i];
         s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
 
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
     // TODO: CAL theta
     cdMc = cdMw * wMc;
-    double theta =  std::atan2(cdMc[0][0], cdMc[1][0]);
+    double theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
     task.setTheta( theta);
 
     vpPlot graph(2, 800, 500, 400, 10, "Curves...");
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
         }
         // TODO: CAL theta
         cdMc = cdMw * wMc;
-        double theta =  std::atan2(cdMc[0][0], cdMc[1][0]);
+        double theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
         //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
 
