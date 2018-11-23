@@ -50,10 +50,10 @@ vpColVector NewServo::computeControlLaw() {
 
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
                 + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
-        e[3*i + 1] = rhoList[i].x - rhoDesiredList[i].x * std::cos(theta0)
-                - rhoDesiredList[i].y * std::sin(theta0);
-        e[3*i + 2] = rhoList[i].y + rhoDesiredList[i].x * std::sin(theta0)
-                - rhoDesiredList[i].y * std::cos(theta0);
+        e[3*i + 1] = rhoList[i].x - rhoDesiredList[i].x * std::cos(theta)
+                - rhoDesiredList[i].y * std::sin(theta);
+        e[3*i + 2] = rhoList[i].y + rhoDesiredList[i].x * std::sin(theta)
+                - rhoDesiredList[i].y * std::cos(theta);
     }
 
     v.resize(6);
@@ -76,8 +76,10 @@ vpColVector NewServo::computeControlLaw() {
 
 void NewServo::setTheta(double _theta)
 {
-    if(initialize)
+    if(initialize) {
         theta0 = _theta;
+        theta = theta0;
+    }
     else
         theta = _theta;
 }
