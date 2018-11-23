@@ -22,23 +22,25 @@ int main(int argc, char **argv)
     vpHomogeneousMatrix cdMw = wdMc.inverse();
 
     vpPoint oP[3], cP[3], cdP[3];
-    oP[0].setWorldCoordinates(1., 0., -0.2);
+    oP[0].setWorldCoordinates(1., 0., 0.2);
     oP[1].setWorldCoordinates(4.2, 0.5, 0.1);
     oP[2].setWorldCoordinates(4.3, 0.9, 0.1);
+
 
     vpFeaturePoint3D s[3];
     vpFeaturePoint3D s_star[3];
 
-    vpHomogeneousMatrix wMc, cMw;
+    vpHomogeneousMatrix wMc(4, 0.1, -0.1, -1.57, 0, -1.57);
+    vpHomogeneousMatrix cMw;
     vpHomogeneousMatrix cdMc;
 
     vpSimulatorCamera robot;
     double period = 0.1;
     robot.setSamplingTime(period);
 
-    robot.getPosition(wMc);
     cMw = wMc.inverse();
     for (int (i) = 0; (i) < 3; ++(i)) {
+        cout <<"i:" << i << endl;
         cP[i] = cMw * oP[i];
         s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
 
@@ -84,6 +86,7 @@ int main(int argc, char **argv)
         // TODO: CAL theta
         cdMc = cdMw * wMc;
         double theta =  std::atan2(cdMc[0][0], cdMc[1][0]);
+        //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
 
         v = task.computeControlLaw();

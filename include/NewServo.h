@@ -52,7 +52,6 @@ private:
     bool initialize;
     double theta0;
     double theta;
-    vpColVector v;
     vpColVector e;
 
     int iteration;

@@ -10,7 +10,6 @@ NewServo::NewServo(double _lamda, double _alpha, double k_0, double k_1, double 
 {
     initialize = true;
     iteration = 0;
-    v.resize(6);
 }
 
 
@@ -32,6 +31,7 @@ void NewServo::addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star)
     rhoDesiredList.push_back(rho_star);
 }
 vpColVector NewServo::computeControlLaw() {
+    vpColVector v(6);
     int n = featureList.size();
     if(initialize)
     {
