@@ -27,19 +27,24 @@ int main(int argc, char **argv)
     vpFeaturePoint3D s[3];
     vpFeaturePoint3D s_star[3];
 
-    vpHomogeneousMatrix wMc(4, 0.1, -0.1, 0, M_PI / 2, 0), cMw;
-    vpHomogeneousMatrix wdMc(0 ,0, 0, 0, M_PI / 2, 0);
+    vpHomogeneousMatrix wMc(-4, 0.1, -0.1, 0, M_PI / 2, 0), cMw;
+    vpHomogeneousMatrix wdMc(-2 ,0, 0, 0, M_PI / 2, 0);
     vpHomogeneousMatrix cdMw = wdMc.inverse();
     vpHomogeneousMatrix cdMc;
-    //vpHomogeneousMatrix::saveYAML("a.dat", wMc);
-
+    vpHomogeneousMatrix::saveYAML("a.dat", wMc.inverse());
+    oP[0].print();
+    cout <<endl;
     vpSimulatorCamera robot;
     double period = 0.1;
     robot.setSamplingTime(period);
 
     cMw = wMc.inverse();
     for (int (i) = 0; (i) < 3; ++(i)) {
-        cP[i] = cMw * oP[i];
+        //cP[i] = cMw * oP[i];
+        cP[i].track(cMw);
+        cP[i].print();
+        cout <<endl;
+        return 0;
         s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
         std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
 
