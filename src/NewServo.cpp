@@ -20,7 +20,7 @@ void NewServo::addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star)
 {
     featureList.push_back(&s);
     desiredFeatureList.push_back(&s_star);
-
+    //std::cout <<"s: " << &s << std::endl;
     cv::Point2d rho_s, rho_star;
     rho_s.x = s.get_Y() / s.get_Z();
     rho_s.y = 1. / s.get_Z();
@@ -45,6 +45,7 @@ vpColVector NewServo::computeControlLaw() {
     time_elapse = period * iteration;
 
     for (int i = 0; i < n; ++i) {
+        //std::cout <<"Z: " << featureList[i] << std::endl;
         rhoList[i].x = featureList[i]->get_Y() / featureList[i]->get_Z();
         rhoList[i].y = 1. / featureList[i]->get_Z();
 
@@ -56,7 +57,6 @@ vpColVector NewServo::computeControlLaw() {
                 - rhoDesiredList[i].y * std::cos(theta);
     }
 
-    v.resize(6);
     for (int i = 0; i < n; ++i) {
         v[5] += k0 * theta0 - lamda * std::exp(-alpha * time_elapse);
     }
@@ -67,8 +67,11 @@ vpColVector NewServo::computeControlLaw() {
         r1 = e[3 * i + 2];
         r2 = e[3 * i + 1] * std::exp(alpha * time_elapse);
         v[0] += k1 * r1 + k2 * r2;
+        //std::cout << "r1: " << r1 << "r2: " << r2 << std::endl;
+        //std::cout << "e[3 * i + 1]: " << e[3 * i + 1] << "e[3 * i + 2]: " << e[3 * i + 2] << std::endl;
     }
     v[0] /= n;
+    //std::cout << "v[0]: " << n << std::endl;
 
     iteration++;
     return v;

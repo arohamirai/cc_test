@@ -18,9 +18,6 @@ using namespace std;
 
 int main(int argc, char **argv)
 {
-    vpHomogeneousMatrix wdMc(0 ,0, 0, 0, 0, 0);
-    vpHomogeneousMatrix cdMw = wdMc.inverse();
-
     vpPoint oP[3], cP[3], cdP[3];
     oP[0].setWorldCoordinates(1., 0., 0.2);
     oP[1].setWorldCoordinates(4.2, 0.5, 0.1);
@@ -30,8 +27,9 @@ int main(int argc, char **argv)
     vpFeaturePoint3D s[3];
     vpFeaturePoint3D s_star[3];
 
-    vpHomogeneousMatrix wMc(4, 0.1, -0.1, 0, M_PI / 2, 0);
-    vpHomogeneousMatrix cMw;
+    vpHomogeneousMatrix wMc(4, 0.1, -0.1, 0, M_PI / 2, 0), cMw;
+    vpHomogeneousMatrix wdMc(0 ,0, 0, 0, M_PI / 2, 0);
+    vpHomogeneousMatrix cdMw = wdMc.inverse();
     vpHomogeneousMatrix cdMc;
     //vpHomogeneousMatrix::saveYAML("a.dat", wMc);
 
@@ -43,17 +41,19 @@ int main(int argc, char **argv)
     for (int (i) = 0; (i) < 3; ++(i)) {
         cP[i] = cMw * oP[i];
         s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
+        std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
 
     }
     for (int (i) = 0; (i) < 3; ++(i)) {
         cdP[i] = cdMw * oP[i];
         s_star[i].buildFrom(1., cdP[i].get_oY() / cdP[i].get_oX(),  cdP[i].get_oZ() / cdP[i].get_oX());
+        std::cout << "s_star: " << s_star[i].get_X() << "  " << s_star[i].get_Y() << "  " << s_star[i].get_Z() << std::endl;
     }
 
     NewServo task(-0.10, 0.07, 0.13, 0.0995, 0.1050, period);
     task.addFeature(s[0], s_star[0]);
-    task.addFeature(s[1], s_star[1]);
-    task.addFeature(s[2], s_star[2]);
+    //task.addFeature(s[1], s_star[1]);
+    //task.addFeature(s[2], s_star[2]);
 
     // TODO: CAL theta
     cdMc = cdMw * wMc;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     graph.setLegend(1, 1, "y");
     graph.setLegend(1, 2, "z");
 
-    vpColVector v;
+    vpColVector v(2);
     int n = 0;
     // cMo
     while(true)
@@ -82,6 +82,7 @@ int main(int argc, char **argv)
         for (int (i) = 0; (i) < 3; ++(i)) {
             cP[i] = cMw * oP[i];
             s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
+            std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
         }
         // TODO: CAL theta
         cdMc = cdMw * wMc;
@@ -89,8 +90,13 @@ int main(int argc, char **argv)
         //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
 
-        v = task.computeControlLaw();
-        robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+        vpColVector v_sixdof;
+        v_sixdof = task.computeControlLaw();
+        robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
+        v[0] = v_sixdof[0];
+        v[1] = v_sixdof[5];
+
+        //std::cout << "v: " << v[0] <<"  " << v[1] << endl;
 
 
         graph.plot(0, n, v);
@@ -101,6 +107,7 @@ int main(int argc, char **argv)
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             break;
         }
+        n++;
     }
     getchar();
     return 0;
