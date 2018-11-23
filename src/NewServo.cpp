@@ -45,6 +45,9 @@ vpColVector NewServo::computeControlLaw() {
     time_elapse = period * iteration;
 
     for (int i = 0; i < n; ++i) {
+        rhoList[i].x = featureList[i]->get_Y() / featureList[i]->get_Z();
+        rhoList[i].y = 1. / featureList[i]->get_Z();
+
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
                 + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
         e[3*i + 1] = rhoList[i].x - rhoDesiredList[i].x * std::cos(theta0)

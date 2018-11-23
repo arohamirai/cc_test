@@ -27,8 +27,8 @@ public:
     void setTheta(double _theta);
 
 private:
-    std::list<vpFeaturePoint3D *> featureList;
-    std::list<vpFeaturePoint3D *> desiredFeatureList;
+    std::vector<vpFeaturePoint3D *> featureList;
+    std::vector<vpFeaturePoint3D *> desiredFeatureList;
 
     std::vector<cv::Point2d> rhoList;
     std::vector<cv::Point2d> rhoDesiredList;
