@@ -21,31 +21,20 @@ public:
     ~NewServo();
 
     vpColVector computeControlLaw();
+    vpColVector getError();
+    void addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star);
 
-    // oP to image plane
-    vpPoint world2image(const vpPoint &oP, const vpMatrix &intrinsic);
-
-    // image plane to normalized plane
-    vpPoint image2normalized(const vpPoint &iP);
-
-    //world2normalized
-
-    void addFeature(cv::Point3d &s, cv::Point3d &s_star);
-
-    double setTheta(double );
+    void setTheta(double _theta);
 
 private:
-    std::list<cv::Point3d *> featureList;
-    std::list<cv::Point3d *> desiredFeatureList;
-    std::list<unsigned int> featureSelectionList;
+    std::list<vpFeaturePoint3D *> featureList;
+    std::list<vpFeaturePoint3D *> desiredFeatureList;
 
-    std::list<CvPoint2D64f> rhoList;
-    std::list<CvPoint2D64f> rhoDesiredList;
-    std::list<unsigned int> rhoFeatureSelectionList;
+    std::vector<cv::Point2d> rhoList;
+    std::vector<cv::Point2d> rhoDesiredList;
 
-    std::list<CvPoint2D64f *> rList;
-    std::list<CvPoint2D64f *> rDesiredList;
-    std::list<unsigned int> rFeatureSelectionList;
+    std::vector<CvPoint2D64f *> rList;
+    std::vector<CvPoint2D64f *> rDesiredList;
 
     std::list<double> error;
 
@@ -57,15 +46,16 @@ private:
     double period;
     std::chrono::system_clock::time_point start_time;
     std::chrono::system_clock::time_point end_time;
-    std::chrono::duration<double> time_elapse;
+    //std::chrono::duration<double> time_elapse;
+    double time_elapse; // seconds;
 
     bool initialize;
     double theta0;
+    double theta;
     vpColVector v;
+    vpColVector e;
 
     int iteration;
-
-    vpHomogeneousMatrix cMo;
 };
 
 

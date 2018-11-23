@@ -5,10 +5,9 @@
 #include <NewServo.h>
 #include <math.h>
 
-NewServo::NewServo(dobule _lamda, double _alpha, double k_0, double k_1, double k_2, double _period)
+NewServo::NewServo(double _lamda, double _alpha, double k_0, double k_1, double k_2, double _period)
 :lamda(_lamda), alpha(_alpha), k0(k_0), k1(k_1), k2(k_2), period(_period)
 {
-    iter = 0;
     initialize = true;
     iteration = 0;
     v.resize(6);
@@ -18,54 +17,70 @@ NewServo::NewServo(dobule _lamda, double _alpha, double k_0, double k_1, double 
 NewServo::~NewServo() {
 
 }
-void NewServo::addFeature(cv::Point3d &s, cv::Point3d &s_star)
+void NewServo::addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star)
 {
     featureList.push_back(&s);
     desiredFeatureList.push_back(&s_star);
 
     cv::Point2d rho_s, rho_star;
-    rho_s.x = s.y / s.z;
-    rho_s.y = 1. / s.z;
-    rho_star.x = s_star. y / s_star.z;
-    rho_star.y = 1. / s_star.z;
+    rho_s.x = s.get_Y() / s.get_Z();
+    rho_s.y = 1. / s.get_Z();
+    rho_star.x = s_star.get_Y() / s_star.get_Z();
+    rho_star.y = 1. / s_star.get_Z();
 
     rhoList.push_back(rho_s);
     rhoDesiredList.push_back(rho_star);
 }
 vpColVector NewServo::computeControlLaw() {
     int n = featureList.size();
-    int r = 3 * n;
-    int c = 3
-    vpMatrix mat_e(3*n, 1);
-
-
-
     if(initialize)
     {
-        theta0 = solveTheta();
-        mat_e[]
+        e.resize(3*n);
         start_time = std::chrono::system_clock::now();
         initialize = false;
     }
 
     end_time = std::chrono::system_clock::now();
-    time_elapse = (end_time - start_time).count(); // seconds
+    //time_elapse = (end_time - start_time).count(); // seconds
+    time_elapse = period * iteration;
 
-    double theta = solveTheta();
-    e0 = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse) + (theta0 - lamda / (k0 - alpha))
-            * std::exp(-k0 * time_elapse);
-    e1 =
-    v[5] = k0 * theta0 - lamda * std::exp(-alpha * time_elapse);
+    for (int i = 0; i < n; ++i) {
+        e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
+                + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
+        e[3*i + 1] = rhoList[i].x - rhoDesiredList[i].x * std::cos(theta0)
+                - rhoDesiredList[i].y * std::sin(theta0);
+        e[3*i + 2] = rhoList[i].y + rhoDesiredList[i].x * std::sin(theta0)
+                - rhoDesiredList[i].y * std::cos(theta0);
+    }
 
-    vpMatrix mat;
-    mat.pseudoInverse()
+    v.resize(6);
+    for (int i = 0; i < n; ++i) {
+        v[5] += k0 * theta0 - lamda * std::exp(-alpha * time_elapse);
+    }
+    v[5] /= n;
 
-    return vpColVector();
+    for (int i = 0; i < n; ++i) {
+        double r1, r2;
+        r1 = e[3 * i + 2];
+        r2 = e[3 * i + 1] * std::exp(alpha * time_elapse);
+        v[0] += k1 * r1 + k2 * r2;
+    }
+    v[0] /= n;
+
+    iteration++;
+    return v;
 }
 
-double NewServo::solveTheta()
+void NewServo::setTheta(double _theta)
 {
-    return 0.0;
+    if(initialize)
+        theta0 = _theta;
+    else
+        theta = _theta;
 }
 
+vpColVector NewServo::getError()
+{
+    return e;
+}
 

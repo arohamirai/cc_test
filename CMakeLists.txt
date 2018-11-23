@@ -31,7 +31,7 @@ ${G2O_INCLUDE_DIRS}
 ${CERES_INCLUDE_DIRS}
 )
 
-add_executable(cc_test src/cc_test.cpp src/NewServo.cpp src/NewServo.pp)
+add_executable(cc_test src/cc_test.cpp src/NewServo.cpp src/NewServo.cpp)
 target_link_libraries(cc_test
 ${Boost_LIBRARIES}
 ${OpenCV_LIBS}
