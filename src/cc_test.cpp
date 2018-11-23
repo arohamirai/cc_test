@@ -31,27 +31,24 @@ int main(int argc, char **argv)
     vpHomogeneousMatrix wdMc(-2 ,0, 0, 0, M_PI / 2, 0);
     vpHomogeneousMatrix cdMw = wdMc.inverse();
     vpHomogeneousMatrix cdMc;
-    vpHomogeneousMatrix::saveYAML("a.dat", wMc.inverse());
-    oP[0].print();
-    cout <<endl;
+
     vpSimulatorCamera robot;
     double period = 0.1;
     robot.setSamplingTime(period);
 
     cMw = wMc.inverse();
     for (int (i) = 0; (i) < 3; ++(i)) {
-        //cP[i] = cMw * oP[i];
-        cP[i].track(cMw);
-        cP[i].print();
-        cout <<endl;
-        return 0;
-        s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
+        oP[i].track(cMw);
+        oP[i].print();
+        cout << endl;
+        s[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
         std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
 
     }
     for (int (i) = 0; (i) < 3; ++(i)) {
-        cdP[i] = cdMw * oP[i];
-        s_star[i].buildFrom(1., cdP[i].get_oY() / cdP[i].get_oX(),  cdP[i].get_oZ() / cdP[i].get_oX());
+        oP[i].track(cdMw);
+        //cdP[i] = cdMw * oP[i];
+        s_star[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
         std::cout << "s_star: " << s_star[i].get_X() << "  " << s_star[i].get_Y() << "  " << s_star[i].get_Z() << std::endl;
     }
 
@@ -73,9 +70,9 @@ int main(int argc, char **argv)
 
     graph.setLegend(0, 0, "vx");
     graph.setLegend(0, 1, "wz");
-    graph.setLegend(1, 0, "x");
-    graph.setLegend(1, 1, "y");
-    graph.setLegend(1, 2, "z");
+    graph.setLegend(1, 0, "e0");
+    graph.setLegend(1, 1, "e1");
+    graph.setLegend(1, 2, "e2");
 
     vpColVector v(2);
     int n = 0;
@@ -85,8 +82,10 @@ int main(int argc, char **argv)
         robot.getPosition(wMc);
         cMw = wMc.inverse();
         for (int (i) = 0; (i) < 3; ++(i)) {
-            cP[i] = cMw * oP[i];
-            s[i].buildFrom(1., cP[i].get_oY() / cP[i].get_oX(),  cP[i].get_oZ() / cP[i].get_oX());
+            oP[i].track(cMw);
+            oP[i].print();
+            cout << endl;
+            s[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
             std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
         }
         // TODO: CAL theta
@@ -106,9 +105,9 @@ int main(int argc, char **argv)
 
         graph.plot(0, n, v);
         graph.plot(1, n, task.getError()); // plot error vector
-        
-        double error = task.getError().sumSquare();
-        if (error < 0.0001) {
+
+        vpColVector error = task.getError();
+        if (error[0] < 0.0001) {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             break;
         }
