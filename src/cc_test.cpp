@@ -74,12 +74,13 @@ int main(int argc, char **argv)
     cdMc = cdMw * wMc;
     cdMc.print();
     cout << endl;
-    double theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
+    double theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
     task.setTheta(theta);
     vpHomogeneousMatrix::saveYAML("cdMc.dat", cdMc);
     cout << " cdMc: ";
     cdMc.print();
-    return 0;
+    //cout << "theta: " << theta << endl;
+    //return 0;
     vpPlot graph(3, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3); // error
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
         }
         // TODO: CAL theta
         cdMc = cdMw * wMc;
-        theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
+        theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
         //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
         cdMc.print();
