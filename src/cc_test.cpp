@@ -65,6 +65,9 @@ int main(int argc, char **argv)
         s_star[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
         //std::cout << "s_star: " << s_star[i].get_X() << "  " << s_star[i].get_Y() << "  " << s_star[i].get_Z() << std::endl;
     }
+    vpHomogeneousMatrix::saveYAML("cMw.dat", cMw);
+    vpHomogeneousMatrix::saveYAML("cdMw.dat", cdMw);
+
 
     NewServo task(-0.10, 0.07, 0.13, 0.0995, 0.1050, period);
     task.addFeature(s[0], s_star[0]);
