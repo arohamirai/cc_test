@@ -119,13 +119,15 @@ int main(int argc, char **argv)
         theta =  std::atan2(cMdc[2][1], cMdc[2][2]);  // rot x
         //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
-        cMdc.print();
-        cout << endl;
+        //cMdc.print();
+        //cout << endl;
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
         v[0] = v_sixdof[0];
         v[1] = v_sixdof[3];
+
+        std::cout <<"theta: " << theta << " v[1]:" << v[1] << std::endl;
 
         //std::cout << "v: " << v[0] <<"  " << v[1] << endl;
 
