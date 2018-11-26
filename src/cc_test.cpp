@@ -43,11 +43,12 @@ int main(int argc, char **argv)
 
 
     vpHomogeneousMatrix cdMw = wdMc.inverse();
-    vpHomogeneousMatrix cdMc;
+    vpHomogeneousMatrix cdMc, cMdc;
 
     vpSimulatorCamera robot;
     double period = 0.1;
     robot.setSamplingTime(period);
+    robot.setPosition(wMc);
 
     cMw = wMc.inverse();
     for (int (i) = 0; (i) < 3; ++(i)) {
@@ -72,14 +73,14 @@ int main(int argc, char **argv)
 
     // TODO: CAL theta
     cdMc = cdMw * wMc;
-    cdMc.print();
-    cout << endl;
-    double theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
+    //cdMc.print();
+    //cout << endl;
+    cMdc = cdMc.inverse();
+    double theta =  std::atan2(cMdc[2][1], cMdc[2][2]);  // rot x
     cout <<"Init Theta: " << theta << endl;
     task.setTheta(theta);
-    vpHomogeneousMatrix::saveYAML("cdMc.dat", cdMc);
-    cout << " Init cdMc: ";
-    cdMc.print();
+    cout << " Init cMdc: ";
+    cMdc.print();
     cout << endl;
 
 
@@ -114,11 +115,12 @@ int main(int argc, char **argv)
         }
         // TODO: CAL theta
         cdMc = cdMw * wMc;
-        theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
-        std::cout <<"theta: " << theta << std::endl;
+        cMdc = cdMc.inverse();
+        theta =  std::atan2(cMdc[2][1], cMdc[2][2]);  // rot x
+        //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
-        //cdMc.print();
-        //cout << endl;
+        cMdc.print();
+        cout << endl;
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
@@ -137,7 +139,7 @@ int main(int argc, char **argv)
 
         vpColVector error = task.getError();
         vpColVector::saveYAML("e.dat", error);
-        if (fabs(error[0]) < 0.0001) {
+        if (fabs(error[0]) < 0.1) {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             cout << "n: " << n << endl;
             break;
