@@ -127,7 +127,7 @@ int main(int argc, char **argv)
         v[0] = v_sixdof[0];
         v[1] = v_sixdof[3];
 
-        std::cout <<"theta: " << theta << " v[1]:" << v[1] << std::endl;
+        //std::cout <<"theta: " << theta << " v[1]:" << v[1] << std::endl;
 
         //std::cout << "v: " << v[0] <<"  " << v[1] << endl;
 
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 
         vpColVector error = task.getError();
         vpColVector::saveYAML("e.dat", error);
-        if (fabs(error[0]) < 0.1) {
+        if (error.sumSquare() < 0.01/*fabs(error[0]) < 0.1*/) {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             cout << "n: " << n << endl;
             break;
