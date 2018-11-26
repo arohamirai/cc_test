@@ -50,7 +50,8 @@ vpColVector NewServo::computeControlLaw() {
         rhoList[i].y = 1. / featureList[i]->get_Z();
 
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
-                + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
+                + (-theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
+
         e[3*i + 1] = rhoList[i].x - rhoDesiredList[i].x * std::cos(theta)
                 - rhoDesiredList[i].y * std::sin(theta);
         e[3*i + 2] = rhoList[i].y + rhoDesiredList[i].x * std::sin(theta)

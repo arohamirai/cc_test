@@ -141,12 +141,12 @@ int main(int argc, char **argv)
 
         vpColVector error = task.getError();
         vpColVector::saveYAML("e.dat", error);
-        if (error.sumSquare() < 0.01/*fabs(error[0]) < 0.1*/) {
+        if (error.sumSquare() < 0.0001/*fabs(error[0]) < 0.1*/) {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             cout << "n: " << n << endl;
             break;
         }
-        if(n > 200)
+        if(n > 2000)
             break;
         n++;
     }
