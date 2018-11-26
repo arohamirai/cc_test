@@ -58,9 +58,9 @@ vpColVector NewServo::computeControlLaw() {
     }
 
     for (int i = 0; i < n; ++i) {
-        v[5] += k0 * theta0 - lamda * std::exp(-alpha * time_elapse);
+        v[3] += k0 * theta0 - lamda * std::exp(-alpha * time_elapse);
     }
-    v[5] /= n;
+    v[3] /= n;
 
     for (int i = 0; i < n; ++i) {
         double r1, r2;

@@ -75,12 +75,14 @@ int main(int argc, char **argv)
     cdMc.print();
     cout << endl;
     double theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
+    cout <<"Init Theta: " << theta << endl;
     task.setTheta(theta);
     vpHomogeneousMatrix::saveYAML("cdMc.dat", cdMc);
-    cout << " cdMc: ";
+    cout << " Init cdMc: ";
     cdMc.print();
-    //cout << "theta: " << theta << endl;
-    //return 0;
+    cout << endl;
+
+
     vpPlot graph(3, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3); // error
@@ -113,15 +115,15 @@ int main(int argc, char **argv)
         // TODO: CAL theta
         cdMc = cdMw * wMc;
         theta =  std::atan2(cdMc[2][1], cdMc[2][2]);  // rot x
-        //std::cout <<"theta: " << theta << std::endl;
+        std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
-        cdMc.print();
-        cout << endl;
+        //cdMc.print();
+        //cout << endl;
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
         v[0] = v_sixdof[0];
-        v[1] = v_sixdof[5];
+        v[1] = v_sixdof[3];
 
         //std::cout << "v: " << v[0] <<"  " << v[1] << endl;
 
@@ -131,7 +133,7 @@ int main(int argc, char **argv)
         vpColVector traj(1);
         traj[0] = cdMc[2][3];
         graph.plot(2, n, traj);
-        cout << "traj:" << cdMc[2][3] << endl;
+        //cout << "traj:" << cdMc[2][3] << endl;
 
         vpColVector error = task.getError();
         vpColVector::saveYAML("e.dat", error);
