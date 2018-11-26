@@ -27,8 +27,21 @@ int main(int argc, char **argv)
     vpFeaturePoint3D s[3];
     vpFeaturePoint3D s_star[3];
 
-    vpHomogeneousMatrix wMc(-4, 0.1, -0.1, 0, M_PI / 2, 0), cMw;
-    vpHomogeneousMatrix wdMc(-2 ,0, 0, 0, M_PI / 2, M_PI / 4);
+    vpHomogeneousMatrix wMc, cMw;
+    vpTranslationVector wtc;  // mm
+    vpRzyxVector wrc;         // radian
+    wtc.buildFrom(-4, 0.1, -0.1);
+    wrc.buildFrom(0, M_PI / 2, 0);
+    wMc.buildFrom(wtc, vpRotationMatrix(wrc));
+
+    vpHomogeneousMatrix wdMc;
+    vpTranslationVector wdtc;  // mm
+    vpRzyxVector wdrc;         // radian
+    wdtc.buildFrom(-2 ,0, 0);
+    wdrc.buildFrom(0, M_PI / 2, M_PI / 4);
+    wdMc.buildFrom(wdtc, vpRotationMatrix(wdrc));
+
+
     vpHomogeneousMatrix cdMw = wdMc.inverse();
     vpHomogeneousMatrix cdMc;
 
@@ -42,8 +55,8 @@ int main(int argc, char **argv)
         //oP[i].print();
         //cout << endl;
         s[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
+       // vpHomogeneousMatrix::saveYAML("cMw.dat", cMw);
         //std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
-
     }
     for (int (i) = 0; (i) < 3; ++(i)) {
         oP[i].track(cdMw);
@@ -59,9 +72,14 @@ int main(int argc, char **argv)
 
     // TODO: CAL theta
     cdMc = cdMw * wMc;
+    cdMc.print();
+    cout << endl;
     double theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
     task.setTheta(theta);
-
+    vpHomogeneousMatrix::saveYAML("cdMc.dat", cdMc);
+    cout << " cdMc: ";
+    cdMc.print();
+    return 0;
     vpPlot graph(3, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3); // error
@@ -93,7 +111,7 @@ int main(int argc, char **argv)
         }
         // TODO: CAL theta
         cdMc = cdMw * wMc;
-        double theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
+        theta =  std::atan2(cdMc[1][0], cdMc[0][0]);
         //std::cout <<"theta: " << theta << std::endl;
         task.setTheta( theta);
         cdMc.print();
