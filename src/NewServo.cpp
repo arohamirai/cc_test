@@ -72,8 +72,6 @@ vpColVector NewServo::computeControlLaw() {
     }
     v[0] /= n;
     //std::cout << "v[0]: " << n << std::endl;
-
-    iteration++;
     return v;
 }
 
