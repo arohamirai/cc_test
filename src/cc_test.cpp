@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     vpHomogeneousMatrix wdMc;
     vpTranslationVector wdtc;  // mm
     vpRzyxVector wdrc;         // radian
-    wdtc.buildFrom(-2 ,0, 0);
+    wdtc.buildFrom(-2 ,0.1, -0.1);
     wdrc.buildFrom(0, M_PI / 2, M_PI / 4);
     wdMc.buildFrom(wdtc, vpRotationMatrix(wdrc));
 
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
             cout << "n: " << n << endl;
             break;
         }
-        if(n > 2000)
+        if(n > 5000)
             break;
         n++;
     }
