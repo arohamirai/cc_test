@@ -24,6 +24,7 @@ vpHomogeneousMatrix Eigen2Visp(Eigen::Affine3d& m)
         for (int j = 0; j < 4; ++j) {
             m_[i][j] = m.matrix()(i, j);
         }
+    return m_;
 }
 
 Eigen::Affine3d Visp2Eigen(vpHomogeneousMatrix& m)
@@ -34,6 +35,7 @@ Eigen::Affine3d Visp2Eigen(vpHomogeneousMatrix& m)
         for (int j = 0; j < 4; ++j) {
             m_.matrix()(i, j) = m[i][j];
         }
+    return m_;
 }
 
 
