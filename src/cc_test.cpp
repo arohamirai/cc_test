@@ -57,11 +57,17 @@ int main(int argc, char **argv)
     wp[1] = Eigen::Vector3d(4.2, 0.5, 0.1);
     wp[2] = Eigen::Vector3d(4.3, 0.9, 0.1);
 
-    //TODO: INIT wMc, wMcd
+    // INIT wMc, wMcd
+    wMc.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
+    wMc.pretranslate(Eigen::Vector3d(-4, 0.1, -0.1));
 
-    //TODO: Init servo
+    wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
+    wMcd.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 1,0,0 )));
+    wMcd.pretranslate(Eigen::Vector3d(-2 ,0.1, -0.1));
+
+    // Init servo
     NewServo task(lamda, alpha, k0,  k1, k2, period);
-    //TODO: addFeature(points in camera)
+    // addFeature(points in camera)
     for (int i = 0; i < n_features; ++i) {
         cp[i] = wMc.inverse() * wp[i];
         cdp[i] = wMcd.inverse() * wp[i];
@@ -73,35 +79,56 @@ int main(int argc, char **argv)
     robot.setSamplingTime(period);
     robot.setPosition(Eigen2Visp(wMc));
 
+    // init graph
+    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    graph.initGraph(0, 2); // v. w
+    graph.initGraph(1, 3); // error
+    graph.setTitle(0, "Velocities");
+    graph.setTitle(1, "Error s-s*");
+
+    graph.setLegend(0, 0, "vx");
+    graph.setLegend(0, 1, "wz");
+    graph.setLegend(1, 0, "e0");
+    graph.setLegend(1, 1, "e1");
+    graph.setLegend(1, 2, "e2");
+
     int n = 0;
+    vpColVector error;
+    vpColVector v(2);
     while(true)
     {
         robot.getPosition(wMc_visp);
         wMc = Visp2Eigen(wMc_visp);
 
-        //TODO: update features
+        // update features
         for (int i = 0; i < n_features; ++i) {
             cp[i] = wMc.inverse() * wp[i];
         }
-        //TODO: update theta
+        // update theta
         cMcd = wMc.inverse() * wMcd;
         theta = std::atan2(cMcd.matrix()(2, 1), cMcd.matrix()(2, 2));
         task.setTheta(theta);
 
-        //TODO: get velocity
+        // get velocity
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
 
         // publish vel
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
+        // TODO: plot graph
+
+        v[0] = v[0];   // vx
+        v[1] = v[5];   // wz
+        graph.plot(0, n, v);
+        graph.plot(1, n, error);
+
         // whether to stop
-        if(task.getError().sumSquare() < 0.1)
+        if(error.sumSquare() < 0.1)
         {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             break;
         }
-
         if(n > 500)
             break;
         n++;
