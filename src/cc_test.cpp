@@ -60,9 +60,11 @@ int main(int argc, char **argv)
     wp[2] = Eigen::Vector3d(4.3, 0.9, 0.1);
 
     // INIT wMc, wMcd
+    wMc.setIdentity();
     wMc.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
     wMc.pretranslate(Eigen::Vector3d(-4, 0.1, -0.1));
 
+    wMcd.setIdentity();
     wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
     wMcd.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 1,0,0 )));
     wMcd.pretranslate(Eigen::Vector3d(-2 ,0.1, -0.1));
