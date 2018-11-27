@@ -22,10 +22,10 @@ void NewServo::addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star)
     desiredFeatureList.push_back(&s_star);
     //std::cout <<"s: " << &s << std::endl;
     cv::Point2d rho_s, rho_star;
-    rho_s.x = s.get_Y() / s.get_Z();
-    rho_s.y = 1. / s.get_Z();
-    rho_star.x = s_star.get_Y() / s_star.get_Z();
-    rho_star.y = 1. / s_star.get_Z();
+    rho_s.x = s.get_Y() / s.get_X();
+    rho_s.y = 1. / s.get_X();
+    rho_star.x = s_star.get_Y() / s_star.get_X();
+    rho_star.y = 1. / s_star.get_X();
 
     rhoList.push_back(rho_s);
     rhoDesiredList.push_back(rho_star);
@@ -46,8 +46,8 @@ vpColVector NewServo::computeControlLaw() {
 
     for (int i = 0; i < n; ++i) {
         //std::cout <<"Z: " << featureList[i] << std::endl;
-        rhoList[i].x = featureList[i]->get_Y() / featureList[i]->get_Z();
-        rhoList[i].y = 1. / featureList[i]->get_Z();
+        rhoList[i].x = featureList[i]->get_Y() / featureList[i]->get_X();
+        rhoList[i].y = 1. / featureList[i]->get_X();
 
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
                 + (-theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
