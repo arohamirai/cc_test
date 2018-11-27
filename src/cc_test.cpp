@@ -10,149 +10,103 @@
 #include <visp3/visual_features/vpFeaturePoint.h>
 #include <visp3/vs/vpServo.h>
 #include "NewServo.h"
-
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 using namespace std;
 
 
+vpHomogeneousMatrix Eigen2Visp(Eigen::Affine3d& m)
+{
+    vpHomogeneousMatrix m_;
+    m_.eye();
+    for(int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; ++j) {
+            m_[i][j] = m.matrix()(i, j);
+        }
+}
+
+Eigen::Affine3d Visp2Eigen(vpHomogeneousMatrix& m)
+{
+    Eigen::Affine3d m_;
+    m_.Identity();
+    for(int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; ++j) {
+            m_.matrix()(i, j) = m[i][j];
+        }
+}
+
 
 int main(int argc, char **argv)
 {
-    vpPoint oP[3], cP[3], cdP[3];
-    oP[0].setWorldCoordinates(1., 0., 0.2);
-    oP[1].setWorldCoordinates(4.2, 0.5, 0.1);
-    oP[2].setWorldCoordinates(4.3, 0.9, 0.1);
-
-
-    vpFeaturePoint3D s[3];
-    vpFeaturePoint3D s_star[3];
-
-    vpHomogeneousMatrix wMc, cMw;
-    vpTranslationVector wtc;  // mm
-    vpRzyxVector wrc;         // radian
-    wtc.buildFrom(-4, 0.1, -0.1);
-    wrc.buildFrom(0, M_PI / 2, 0);
-    wMc.buildFrom(wtc, vpRotationMatrix(wrc));
-
-    vpHomogeneousMatrix wdMc;
-    vpTranslationVector wdtc;  // mm
-    vpRzyxVector wdrc;         // radian
-    wdtc.buildFrom(-2 ,0.1, -0.1);
-    wdrc.buildFrom(0, M_PI / 2, M_PI / 4);
-    wdMc.buildFrom(wdtc, vpRotationMatrix(wdrc));
-
-
-    vpHomogeneousMatrix cdMw = wdMc.inverse();
-    vpHomogeneousMatrix cdMc, cMdc;
-
-    vpSimulatorCamera robot;
+    double lamda = -0.10;
+    double alpha = 0.07;
+    double k0 = 0.13;
+    double k1 = 0.0995;
+    double k2 = 0.1050;
     double period = 0.1;
+    double theta;
+
+    Eigen::Vector3d wp[3], cp[3], cdp[3];
+    int n_features = 3;
+    Eigen::Affine3d wMc, wMcd;
+    Eigen::Affine3d cMcd;
+    vpHomogeneousMatrix wMc_visp;
+
+    wp[0] = Eigen::Vector3d(1., 0., 0.2);
+    wp[1] = Eigen::Vector3d(4.2, 0.5, 0.1);
+    wp[2] = Eigen::Vector3d(4.3, 0.9, 0.1);
+
+    //TODO: INIT wMc, wMcd
+
+    //TODO: Init servo
+    NewServo task(lamda, alpha, k0,  k1, k2, period);
+    //TODO: addFeature(points in camera)
+    for (int i = 0; i < n_features; ++i) {
+        cp[i] = wMc.inverse() * wp[i];
+        cdp[i] = wMcd.inverse() * wp[i];
+        task.addFeature(cp[i], cdp[i]);
+    }
+
+    // init robot
+    vpSimulatorCamera robot;
     robot.setSamplingTime(period);
-    robot.setPosition(wMc);
+    robot.setPosition(Eigen2Visp(wMc));
 
-    cMw = wMc.inverse();
-    for (int (i) = 0; (i) < 3; ++(i)) {
-        oP[i].track(cMw);
-        //oP[i].print();
-        //cout << endl;
-        s[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
-       // vpHomogeneousMatrix::saveYAML("cMw.dat", cMw);
-        //std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
-    }
-    for (int (i) = 0; (i) < 3; ++(i)) {
-        oP[i].track(cdMw);
-        //cdP[i] = cdMw * oP[i];
-        s_star[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
-        //std::cout << "s_star: " << s_star[i].get_X() << "  " << s_star[i].get_Y() << "  " << s_star[i].get_Z() << std::endl;
-    }
-    vpHomogeneousMatrix::saveYAML("cMw.dat", cMw);
-    vpHomogeneousMatrix::saveYAML("cdMw.dat", cdMw);
-
-
-    NewServo task(-0.10, 0.07, 0.13, 0.0995, 0.1050, period);
-    task.addFeature(s[0], s_star[0]);
-    //task.addFeature(s[1], s_star[1]);
-    //task.addFeature(s[2], s_star[2]);
-
-    // TODO: CAL theta
-    cdMc = cdMw * wMc;
-    //cdMc.print();
-    //cout << endl;
-    cMdc = cdMc.inverse();
-    double theta =  std::atan2(cMdc[2][1], cMdc[2][2]);  // rot x
-    cout <<"Init Theta: " << theta << endl;
-    task.setTheta(theta);
-    cout << " Init cMdc: ";
-    cMdc.print();
-    cout << endl;
-
-
-    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
-    graph.initGraph(0, 2); // v. w
-    graph.initGraph(1, 3); // error
-    graph.initGraph(2, 1); // traj
-    graph.setTitle(0, "Velocities");
-    graph.setTitle(1, "Error s-s*");
-    graph.setTitle(2, "traj");
-
-    graph.setLegend(0, 0, "vx");
-    graph.setLegend(0, 1, "wz");
-    graph.setLegend(1, 0, "e0");
-    graph.setLegend(1, 1, "e1");
-    graph.setLegend(1, 2, "e2");
-    graph.setLegend(2, 0, "traj");
-
-    vpColVector v(2);
     int n = 0;
-    // cMo
     while(true)
     {
-        robot.getPosition(wMc);
-        cMw = wMc.inverse();
-        for (int (i) = 0; (i) < 3; ++(i)) {
-            oP[i].track(cMw);
-            //oP[i].print();
-            //cout << endl;
-            s[i].buildFrom(oP[i].get_X(),  oP[i].get_Y(), oP[i].get_Z());
-            //std::cout << "s: " << s[i].get_X() << "  " << s[i].get_Y() << "  " << s[i].get_Z() << std::endl;
+        robot.getPosition(wMc_visp);
+        wMc = Visp2Eigen(wMc_visp);
+
+        //TODO: update features
+        for (int i = 0; i < n_features; ++i) {
+            cp[i] = wMc.inverse() * wp[i];
         }
-        // TODO: CAL theta
-        cdMc = cdMw * wMc;
-        cMdc = cdMc.inverse();
-        theta =  std::atan2(cMdc[2][1], cMdc[2][2]);  // rot x
-        //std::cout <<"theta: " << theta << std::endl;
-        task.setTheta( theta);
-        //cMdc.print();
-        //cout << endl;
+        //TODO: update theta
+        cMcd = wMc.inverse() * wMcd;
+        theta = std::atan2(cMcd.matrix()(2, 1), cMcd.matrix()(2, 2));
+        task.setTheta(theta);
+
+        //TODO: get velocity
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
+
+        // publish vel
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
-        v[0] = v_sixdof[0];
-        v[1] = v_sixdof[3];
 
-        //std::cout <<"theta: " << theta << " v[1]:" << v[1] << std::endl;
-
-        //std::cout << "v: " << v[0] <<"  " << v[1] << endl;
-
-        graph.plot(0, n, v);
-        graph.plot(1, n, task.getError()); // plot error vector
-
-        vpColVector traj(1);
-        traj[0] = cdMc[2][3];
-        graph.plot(2, n, traj);
-        //cout << "traj:" << cdMc[2][3] << endl;
-
-        vpColVector error = task.getError();
-        vpColVector::saveYAML("e.dat", error);
-        if (error.sumSquare() < 0.0001/*fabs(error[0]) < 0.1*/) {
+        // whether to stop
+        if(task.getError().sumSquare() < 0.1)
+        {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
-            cout << "n: " << n << endl;
             break;
         }
-        if(n > 5000)
+
+        if(n > 500)
             break;
         n++;
     }
+
     getchar();
     return 0;
 }

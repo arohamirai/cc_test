@@ -12,29 +12,33 @@
 #include <list>
 #include "opencv2/opencv.hpp"
 #include <chrono>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 
 class NewServo {
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     NewServo(double _lamda, double alpha, double k_0, double k_1, double k_2,
             double _period);
     ~NewServo();
 
     vpColVector computeControlLaw();
     vpColVector getError();
-    void addFeature(vpFeaturePoint3D &s, vpFeaturePoint3D &s_star);
+    void addFeature(Eigen::Vector3d &s, Eigen::Vector3d &s_star);
 
     void setTheta(double _theta);
 
 private:
-    std::vector<vpFeaturePoint3D *> featureList;
-    std::vector<vpFeaturePoint3D *> desiredFeatureList;
+    std::vector<Eigen::Vector3d *> featureList;
+    std::vector<Eigen::Vector3d *> desiredFeatureList;
 
-    std::vector<cv::Point2d> rhoList;
-    std::vector<cv::Point2d> rhoDesiredList;
+    std::vector<Eigen::Vector2d> rhoList;
+    std::vector<Eigen::Vector2d> rhoDesiredList;
 
-    std::vector<CvPoint2D64f *> rList;
-    std::vector<CvPoint2D64f *> rDesiredList;
+    std::vector<Eigen::Vector2d> rList;
+    std::vector<Eigen::Vector2d> rDesiredList;
 
     std::list<double> error;
 
