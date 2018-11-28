@@ -71,10 +71,12 @@ int main(int argc, char **argv)
 
     // Init servo
     NewServo task(lamda, alpha, k0,  k1, k2, period);
-    // addFeature(points in camera)
+    // addFeature(points in camera, normalized)
     for (int i = 0; i < n_features; ++i) {
         cp[i] = wMc.inverse() * wp[i];
+        cp[i] /= cp[i][0];
         cdp[i] = wMcd.inverse() * wp[i];
+        cdp[i] /= cdp[i][0];
         task.addFeature(cp[i], cdp[i]);
     }
 
@@ -107,6 +109,7 @@ int main(int argc, char **argv)
         // update features
         for (int i = 0; i < n_features; ++i) {
             cp[i] = wMc.inverse() * wp[i];
+            cp[i] /= cp[i][0];
         }
         // update theta
         cMcd = wMc.inverse() * wMcd;
