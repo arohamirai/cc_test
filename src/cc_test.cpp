@@ -122,23 +122,24 @@ int main(int argc, char **argv)
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
         error = task.getError();
-
+        v_sixdof[0] = 0;
         // publish vel
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
         // TODO: plot graph
-        v[0] = v[0];   // vx
-        v[1] = v[5];   // wz
+        v[0] = 0.0;   // vx
+        v[1] = v_sixdof[5];   // wz
+
         graph.plot(0, n, v);
         graph.plot(1, n, error);
 
         // whether to stop
-        if(error.sumSquare() < 0.1)
+        if(fabs(error[0])< 0.001 && n > 1)
         {
             std::cout << "Reached a small error. We stop the loop... " << std::endl;
             break;
         }
-        if(n > 500)
+        if(n > 5000)
             break;
         n++;
     }

@@ -46,7 +46,6 @@ vpColVector NewServo::computeControlLaw() {
     time_elapse = period * iteration;
 
     for (int i = 0; i < n; ++i) {
-        //std::cout <<"Z: " << featureList[i] << std::endl;
         rhoList[i][0] = featureList[i]->y() / featureList[i]->z();
         rhoList[i][1] = 1. / featureList[i]->z();
 
@@ -58,7 +57,7 @@ vpColVector NewServo::computeControlLaw() {
         e[3*i + 2] = (rhoList[i][1] + rhoDesiredList[i][0] * std::sin(theta)
                 - rhoDesiredList[i][1] * std::cos(theta));
 
-        //*
+        /*
         std::cout<< "rhoList: "<< rhoList[i][0] << "  " << rhoList[i][1]
         <<" ||| " << rhoDesiredList[i][0] << "  " <<rhoDesiredList[i][1] << std::endl;
         std::cout<< "e: "<< e[3*i ] << "  " << e[3*i + 1]
@@ -68,7 +67,7 @@ vpColVector NewServo::computeControlLaw() {
     }
 
     for (int i = 0; i < n; ++i) {
-        v[5] += -(k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse));
+        v[5] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
     }
     v[5] /= n;
     std::cout <<"e0: " << e[0] << " v[5]:" << v[5] << std::endl;
@@ -77,11 +76,10 @@ vpColVector NewServo::computeControlLaw() {
         r1 = e[3 * i + 2];
         r2 = e[3 * i + 1] * std::exp(alpha * time_elapse);
         v[0] += k1 * r1 + k2 * r2;
-        std::cout << "r1: " << r1 << "r2: " << r2 << std::endl;
-        std::cout << "e[3*i]: " << e[3*i] << " e[3 * i + 1]: " << e[3 * i + 1] << " e[3 * i + 2]: " << e[3 * i + 2] << std::endl;
     }
     v[0] /= n;
     std::cout << "v[0]: " << v[0] << std::endl;
+
 
     iteration++;
     return v;
