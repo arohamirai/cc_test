@@ -125,20 +125,22 @@ int main(int argc, char **argv)
     robot.setPosition(Eigen2Visp(wMc));
 
     // init graph
-    vpPlot graph(2, 800, 500, 400, 10, "Curves...");
+    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3*n_features); // error
+    graph.initGraph(2, 1);   // traj
     graph.setTitle(0, "Velocities");
     graph.setTitle(1, "Error s-s*");
+    graph.setTitle(2, "traj*");
 
     graph.setLegend(0, 0, "vx");
     graph.setLegend(0, 1, "wz");
-
     for (int i = 0; i < n_features; ++i) {
         graph.setLegend(1, 3*i, string("e0_" + to_string(i)));
         graph.setLegend(1, 3*i+1, string("e1_" + to_string(i)));
         graph.setLegend(1, 3*i+2, string("e2_" + to_string(i)));
     }
+    graph.setTitle(2, "center");
 
     vpImage<unsigned char> Iint(960, 1280, 255);
     vpDisplayOpenCV displayInt(Iint, 0, 0, "Internal view");
@@ -182,6 +184,10 @@ int main(int argc, char **argv)
 
         graph.plot(0, n, v);
         graph.plot(1, n, error);
+
+        vpColVector lateral(1);
+        lateral[0] = cMcd.matrix()(1,3);
+        graph.plot(2, cMcd.matrix()(0,3), lateral);
 
         // whether to stop
         if(fabs(error[0])< 0.001 && n > 1)
