@@ -12,6 +12,10 @@
 #include "NewServo.h"
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpProjectionDisplay.h>
 
 using namespace std;
 
@@ -38,6 +42,37 @@ Eigen::Affine3d Visp2Eigen(vpHomogeneousMatrix& m)
     return m_;
 }
 
+void display_trajectory(const vpImage<unsigned char> &I, std::vector<Eigen::Vector2d> &point,
+                        const vpCameraParameters &cam)
+{
+    static std::vector<vpImagePoint> traj[3];
+    vpImagePoint cog;
+    for (unsigned int i = 0; i < 3; i++) {
+        vpMeterPixelConversion::convertPoint(cam, point[i][0], point[i][1], cog);
+        traj[i].push_back(cog);
+        cout << "i: " << cog.get_u() << "  " << cog.get_v() << endl;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+        for (unsigned int j = 1; j < traj[i].size(); j++) {
+            vpDisplay::displayLine(I, traj[i][j - 1], traj[i][j], vpColor::green);
+        }
+    }
+}
+void display_trajectory_desired(const vpImage<unsigned char> &I, std::vector<Eigen::Vector2d> &point,
+                        const vpCameraParameters &cam)
+{
+    static std::vector<vpImagePoint> traj;
+    vpImagePoint cog;
+    for (unsigned int i = 0; i < 3; i++) {
+        vpMeterPixelConversion::convertPoint(cam, point[i][0], point[i][1], cog);
+        traj.push_back(cog);
+
+        cout << "desired i: " << cog.get_u() << "  " << cog.get_v() << endl;
+    }
+    for (unsigned int i = 0; i < 3; i++) {
+            vpDisplay::displayCircle(I, traj[i], 3, vpColor::red);
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -50,6 +85,7 @@ int main(int argc, char **argv)
     double theta;
 
     Eigen::Vector3d wp[3], cp[3], cdp[3];
+    std::vector<Eigen::Vector2d> pixel_cp, pixel_cdp;
     int n_features = 3;
     Eigen::Affine3d wMc, wMcd;
     Eigen::Affine3d cMcd;
@@ -78,6 +114,9 @@ int main(int argc, char **argv)
         cdp[i] = wMcd.inverse() * wp[i];
         cdp[i] /= cdp[i][0];
         task.addFeature(cp[i], cdp[i]);
+
+        pixel_cp.push_back(Eigen::Vector2d(cp[i][1], cp[i][2]));
+        pixel_cdp.push_back(Eigen::Vector2d(cdp[i][1], cdp[i][2]));
     }
 
     // init robot
@@ -100,6 +139,11 @@ int main(int argc, char **argv)
         graph.setLegend(1, 3*i+1, string("e1_" + to_string(i)));
         graph.setLegend(1, 3*i+2, string("e2_" + to_string(i)));
     }
+
+    vpImage<unsigned char> Iint(960, 1280, 255);
+    vpDisplayOpenCV displayInt(Iint, 0, 0, "Internal view");
+    vpCameraParameters cam(640, 640, Iint.getWidth() / 2, Iint.getHeight() / 2);
+
     int n = 0;
     vpColVector error;
     vpColVector v(2);
@@ -112,13 +156,18 @@ int main(int argc, char **argv)
         for (int i = 0; i < n_features; ++i) {
             cp[i] = wMc.inverse() * wp[i];
             cp[i] /= cp[i][0];
+            pixel_cp[i] = Eigen::Vector2d(cp[i][1], cp[i][2]);
         }
+        vpDisplay::display(Iint);
+        display_trajectory(Iint, pixel_cp, cam);
+        display_trajectory_desired(Iint, pixel_cdp, cam);
+        vpDisplay::flush(Iint);
+
         // update theta
         cMcd = wMc.inverse() * wMcd;
         theta = std::atan2(cMcd.matrix()(1, 0), cMcd.matrix()(0, 0));
         task.setTheta(theta);
-        //cout << "cMcd: " << cMcd.matrix() << endl;
-        cout << "theta: " << theta << endl;
+        //cout << "theta: " << theta << endl;
 
         // get velocity
         vpColVector v_sixdof;
