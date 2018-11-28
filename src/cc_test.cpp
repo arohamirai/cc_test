@@ -111,6 +111,7 @@ int main(int argc, char **argv)
         // update theta
         cMcd = wMc.inverse() * wMcd;
         theta = std::atan2(cMcd.matrix()(2, 1), cMcd.matrix()(2, 2));
+        theta = std::atan2(cMcd.matrix()(1, 0), cMcd.matrix()(0, 0));
         task.setTheta(theta);
 
         // get velocity
