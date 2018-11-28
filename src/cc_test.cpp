@@ -122,12 +122,11 @@ int main(int argc, char **argv)
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
         error = task.getError();
-        v_sixdof[0] = 0;
         // publish vel
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
         // TODO: plot graph
-        v[0] = 0.0;   // vx
+        v[0] = v_sixdof[0];   // vx
         v[1] = v_sixdof[5];   // wz
 
         graph.plot(0, n, v);
