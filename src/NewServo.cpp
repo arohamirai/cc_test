@@ -51,9 +51,8 @@ vpColVector NewServo::computeControlLaw() {
         rhoList[i][1] = 1. / featureList[i]->z();
 
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
-                + (-theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
+                + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
 
-        theta = std::fabs(theta);
         e[3*i + 1] = (rhoList[i][0] - rhoDesiredList[i][0] * std::cos(theta)
                 - rhoDesiredList[i][1] * std::sin(theta));
         e[3*i + 2] = (rhoList[i][1] + rhoDesiredList[i][0] * std::sin(theta)
@@ -65,9 +64,9 @@ vpColVector NewServo::computeControlLaw() {
     }
 
     for (int i = 0; i < n; ++i) {
-        v[3] += -(k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse));
+        v[5] += -(k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse));
     }
-    v[3] /= n;
+    v[5] /= n;
     //std::cout <<"e0: " << e[0] << " v[3]:" << v[3] << std::endl;
     for (int i = 0; i < n; ++i) {
         double r1, r2;
