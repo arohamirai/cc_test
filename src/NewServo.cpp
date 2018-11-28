@@ -34,13 +34,13 @@ void NewServo::addFeature(Eigen::Vector3d &s, Eigen::Vector3d &s_star)
 vpColVector NewServo::computeControlLaw() {
     vpColVector v(6);
     int n = featureList.size();
+
     if(initialize)
     {
         e.resize(3*n);
         start_time = std::chrono::system_clock::now();
         initialize = false;
     }
-
     end_time = std::chrono::system_clock::now();
     //time_elapse = (end_time - start_time).count(); // seconds
     time_elapse = period * iteration;
@@ -70,7 +70,7 @@ vpColVector NewServo::computeControlLaw() {
         v[5] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
     }
     v[5] /= n;
-    std::cout <<"e0: " << e[0] << " v[5]:" << v[5] << std::endl;
+    //std::cout <<"e0: " << e[0] << " v[5]:" << v[5] << std::endl;
     for (int i = 0; i < n; ++i) {
         double r1, r2;
         r1 = e[3 * i + 2];
@@ -78,7 +78,7 @@ vpColVector NewServo::computeControlLaw() {
         v[0] += k1 * r1 + k2 * r2;
     }
     v[0] /= n;
-    std::cout << "v[0]: " << v[0] << std::endl;
+    //std::cout << "v[0]: " << v[0] << std::endl;
 
 
     iteration++;

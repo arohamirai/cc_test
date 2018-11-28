@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     double theta;
 
     Eigen::Vector3d wp[3], cp[3], cdp[3];
-    int n_features = 1;
+    int n_features = 3;
     Eigen::Affine3d wMc, wMcd;
     Eigen::Affine3d cMcd;
     vpHomogeneousMatrix wMc_visp;
@@ -88,16 +88,18 @@ int main(int argc, char **argv)
     // init graph
     vpPlot graph(2, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
-    graph.initGraph(1, 3); // error
+    graph.initGraph(1, 3*n_features); // error
     graph.setTitle(0, "Velocities");
     graph.setTitle(1, "Error s-s*");
 
     graph.setLegend(0, 0, "vx");
     graph.setLegend(0, 1, "wz");
-    graph.setLegend(1, 0, "e0");
-    graph.setLegend(1, 1, "e1");
-    graph.setLegend(1, 2, "e2");
 
+    for (int i = 0; i < n_features; ++i) {
+        graph.setLegend(1, 3*i, string("e0_" + to_string(i)));
+        graph.setLegend(1, 3*i+1, string("e1_" + to_string(i)));
+        graph.setLegend(1, 3*i+2, string("e2_" + to_string(i)));
+    }
     int n = 0;
     vpColVector error;
     vpColVector v(2);
