@@ -56,18 +56,18 @@ int main(int argc, char **argv)
     vpHomogeneousMatrix wMc_visp;
 
     wp[0] = Eigen::Vector3d(1., 0., 0.2);
-    wp[1] = Eigen::Vector3d(4.2, 0.5, 0.1);
-    wp[2] = Eigen::Vector3d(4.3, 0.9, 0.1);
+    wp[1] = Eigen::Vector3d(4.2, 0.5, 0.3);
+    wp[2] = Eigen::Vector3d(4.3, 0.9, 0.2);
 
     // INIT wMc, wMcd
     wMc.setIdentity();
-    wMc.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
-    wMc.pretranslate(Eigen::Vector3d(-4, 0.1, -0.1));
+    wMc.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 0,0,1 )));
+    wMc.pretranslate(Eigen::Vector3d(-4, 0.2, 0.1));
 
     wMcd.setIdentity();
-    wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,1,0 )));
-    wMcd.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 1,0,0 )));
-    wMcd.pretranslate(Eigen::Vector3d(-2 ,0.1, -0.1));
+    //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,0,1 )));
+    //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 1,0,0 )));
+    wMcd.pretranslate(Eigen::Vector3d(-2 ,0.1, 0.1));
 
     // Init servo
     NewServo task(lamda, alpha, k0,  k1, k2, period);
