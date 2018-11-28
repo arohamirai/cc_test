@@ -117,6 +117,7 @@ int main(int argc, char **argv)
         // get velocity
         vpColVector v_sixdof;
         v_sixdof = task.computeControlLaw();
+        error = task.getError();
 
         // publish vel
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
