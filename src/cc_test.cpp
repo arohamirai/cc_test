@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     double theta;
 
     Eigen::Vector3d wp[3], cp[3], cdp[3];
-    int n_features = 3;
+    int n_features = 1;
     Eigen::Affine3d wMc, wMcd;
     Eigen::Affine3d cMcd;
     vpHomogeneousMatrix wMc_visp;
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     robot.setPosition(Eigen2Visp(wMc));
 
     // init graph
-    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    vpPlot graph(2, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3); // error
     graph.setTitle(0, "Velocities");
@@ -110,9 +110,10 @@ int main(int argc, char **argv)
         }
         // update theta
         cMcd = wMc.inverse() * wMcd;
-        theta = std::atan2(cMcd.matrix()(2, 1), cMcd.matrix()(2, 2));
         theta = std::atan2(cMcd.matrix()(1, 0), cMcd.matrix()(0, 0));
         task.setTheta(theta);
+        //cout << "cMcd: " << cMcd.matrix() << endl;
+        cout << "theta: " << theta << endl;
 
         // get velocity
         vpColVector v_sixdof;
@@ -123,7 +124,6 @@ int main(int argc, char **argv)
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
         // TODO: plot graph
-
         v[0] = v[0];   // vx
         v[1] = v[5];   // wz
         graph.plot(0, n, v);
