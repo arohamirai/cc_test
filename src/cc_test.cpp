@@ -125,13 +125,15 @@ int main(int argc, char **argv)
     robot.setPosition(Eigen2Visp(wMc));
 
     // init graph
-    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    vpPlot graph(4, 800, 500, 400, 10, "Curves...");
     graph.initGraph(0, 2); // v. w
     graph.initGraph(1, 3*n_features); // error
-    graph.initGraph(2, 1);   // traj
+    graph.initGraph(2, 1);   // cMo
+    graph.initGraph(3, 1);   // wMc
     graph.setTitle(0, "Velocities");
     graph.setTitle(1, "Error s-s*");
-    graph.setTitle(2, "traj*");
+    graph.setTitle(2, "cMo");
+    graph.setTitle(3, "wMc");
 
     graph.setLegend(0, 0, "vx");
     graph.setLegend(0, 1, "wz");
@@ -140,7 +142,6 @@ int main(int argc, char **argv)
         graph.setLegend(1, 3*i+1, string("e1_" + to_string(i)));
         graph.setLegend(1, 3*i+2, string("e2_" + to_string(i)));
     }
-    graph.setTitle(2, "center");
 
     vpImage<unsigned char> Iint(960, 1280, 255);
     vpDisplayOpenCV displayInt(Iint, 0, 0, "Internal view");
@@ -182,12 +183,19 @@ int main(int argc, char **argv)
         v[0] = v_sixdof[0];   // vx
         v[1] = v_sixdof[5];   // wz
 
+        // plot error
         graph.plot(0, n, v);
         graph.plot(1, n, error);
 
+        // cMcd
         vpColVector lateral(1);
-        lateral[0] = cMcd.matrix()(1,3);
-        graph.plot(2, cMcd.matrix()(0,3), lateral);
+        lateral[0] = cMcd.inverse().matrix()(1,3);
+        graph.plot(2, cMcd.inverse().matrix()(0,3), lateral);
+
+        // wMc
+        vpColVector world_y(1);
+        world_y[0] = wMc.inverse().matrix()(1,3);
+        graph.plot(3, wMc.inverse().matrix()(0,3), world_y);
 
         // whether to stop
         if(fabs(error[0])< 0.001 && n > 1)
