@@ -22,10 +22,10 @@ void NewServo::addFeature(Eigen::Vector3d &s, Eigen::Vector3d &s_star)
     desiredFeatureList.push_back(&s_star);
 
     Eigen::Vector2d rho_s, rho_star;
-    rho_s[0] = s[1] / s[2];
-    rho_s[1] = 1. / s[2];
-    rho_star[0] = s_star[1] / s_star[2];
-    rho_star[1] = 1. / s_star[2];
+    rho_s[0] = s[0] / s[1];
+    rho_s[1] = 1. / s[1];
+    rho_star[0] = s_star[0] / s_star[1];
+    rho_star[1] = 1. / s_star[1];
 
     rhoList.push_back(rho_s);
     rhoDesiredList.push_back(rho_star);
@@ -46,8 +46,8 @@ vpColVector NewServo::computeControlLaw() {
     time_elapse = period * iteration;
 
     for (int i = 0; i < n; ++i) {
-        rhoList[i][0] = featureList[i]->y() / featureList[i]->z();
-        rhoList[i][1] = 1. / featureList[i]->z();
+        rhoList[i][0] = featureList[i]->x() / featureList[i]->y();
+        rhoList[i][1] = 1. / featureList[i]->y();
 
         e[3*i] = lamda / (k0 - alpha) * std::exp(-alpha * time_elapse)
                 + (theta0 - lamda / (k0 - alpha)) * std::exp(-k0 * time_elapse);
@@ -67,17 +67,17 @@ vpColVector NewServo::computeControlLaw() {
     }
 
     for (int i = 0; i < n; ++i) {
-        v[5] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
+        v[4] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
     }
-    v[5] /= n;
+    v[4] /= n;
     //std::cout <<"e0: " << e[0] << " v[5]:" << v[5] << std::endl;
     for (int i = 0; i < n; ++i) {
         double r1, r2;
         r1 = e[3 * i + 2];
         r2 = e[3 * i + 1] * std::exp(alpha * time_elapse);
-        v[0] += k1 * r1 + k2 * r2;
+        v[2] += k1 * r1 + k2 * r2;
     }
-    v[0] /= n;
+    v[2] /= n;
     //std::cout << "v[0]: " << v[0] << std::endl;
 
 
