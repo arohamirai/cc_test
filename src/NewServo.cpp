@@ -8,7 +8,7 @@
 NewServo::NewServo(double _lamda, double _alpha, double k_0, double k_1, double k_2, double _period)
 :lamda(_lamda), alpha(_alpha), k0(k_0), k1(k_1), k2(k_2), period(_period)
 {
-    initialize = true;
+    initialize = false;
     iteration = 0;
 }
 
@@ -35,11 +35,11 @@ vpColVector NewServo::computeControlLaw() {
     vpColVector v(6);
     int n = featureList.size();
 
-    if(initialize)
+    if(!initialize)
     {
         e.resize(3*n);
         start_time = std::chrono::system_clock::now();
-        initialize = false;
+        initialize = true;
     }
     end_time = std::chrono::system_clock::now();
     //time_elapse = (end_time - start_time).count(); // seconds
@@ -57,7 +57,7 @@ vpColVector NewServo::computeControlLaw() {
         e[3*i + 2] = (rhoList[i][1] + rhoDesiredList[i][0] * std::sin(theta)
                 - rhoDesiredList[i][1] * std::cos(theta));
 
-        /*
+        //*
         std::cout<< "rhoList: "<< rhoList[i][0] << "  " << rhoList[i][1]
         <<" ||| " << rhoDesiredList[i][0] << "  " <<rhoDesiredList[i][1] << std::endl;
         std::cout<< "e: "<< e[3*i ] << "  " << e[3*i + 1]
@@ -70,7 +70,7 @@ vpColVector NewServo::computeControlLaw() {
         v[4] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
     }
     v[4] /= n;
-    //std::cout <<"e0: " << e[0] << " v[5]:" << v[5] << std::endl;
+    std::cout << " v[4]:" << v[4] << std::endl;
     for (int i = 0; i < n; ++i) {
         double r1, r2;
         r1 = e[3 * i + 2];
@@ -78,7 +78,7 @@ vpColVector NewServo::computeControlLaw() {
         v[2] += k1 * r1 + k2 * r2;
     }
     v[2] /= n;
-    //std::cout << "v[0]: " << v[0] << std::endl;
+    std::cout << "v[2]: " << v[2] << std::endl;
 
 
     iteration++;
@@ -87,7 +87,7 @@ vpColVector NewServo::computeControlLaw() {
 
 void NewServo::setTheta(double _theta)
 {
-    if(initialize) {
+    if(!initialize) {
         theta0 = _theta;
         theta = theta0;
     }

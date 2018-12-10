@@ -54,24 +54,24 @@ int main(int argc, char **argv)
 
     Eigen::Vector3d wp[3], cp[3], cdp[3];
     //std::vector<Eigen::Vector2d> pixel_cp, pixel_cdp;
-    int n_features = 3;
+    int n_features = 1;
     Eigen::Affine3d wMc, wMcd;
     Eigen::Affine3d cMcd;
     vpHomogeneousMatrix wMc_visp;
 
-    wp[0] = Eigen::Vector3d(1., 0.2, 0.3);
-    wp[1] = Eigen::Vector3d(4.2, 0.5, 0.3);
-    wp[2] = Eigen::Vector3d(4.3, 0.9, 0.4);
+    wp[0] = Eigen::Vector3d( 0., 0.2, 0.1);
+    wp[1] = Eigen::Vector3d( -0.5, -0.1, 4.2);
+    wp[2] = Eigen::Vector3d( -0.9, -0.2, 4.3);
 
     // INIT wMc, wMcd
     wMc.setIdentity();
     //wMc.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
-    wMc.pretranslate(Eigen::Vector3d(-4, 0.1, 0.2));
+    wMc.pretranslate(Eigen::Vector3d(-0.2, 0.1, -4));
 
     wMcd.setIdentity();
     //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,0,1 )));
-    wMcd.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
-    wMcd.pretranslate(Eigen::Vector3d(-2 ,0.1, 0.1));
+    wMcd.prerotate(Eigen::AngleAxisd(-M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
+    wMcd.pretranslate(Eigen::Vector3d(-0.1, 0.1, -2));
 
     // Init servo
     NewServo task(lamda, alpha, k0,  k1, k2, period);
@@ -83,7 +83,8 @@ int main(int argc, char **argv)
         cdp[i] /= cdp[i][2];
         task.addFeature(cp[i], cdp[i]);
 
-        //cout << "cp: " << cp[i].matrix() << endl;
+        cout << "cp: " << cp[i].matrix() << endl;
+        cout << "cdp: " << cdp[i].matrix() << endl;
 
         //pixel_cp.push_back(Eigen::Vector2d(cp[i][0], cp[i][1]));
         //pixel_cdp.push_back(Eigen::Vector2d(cdp[i][0], cdp[i][1]));
@@ -120,18 +121,22 @@ int main(int argc, char **argv)
     {
         robot.getPosition(wMc_visp);
         wMc = Visp2Eigen(wMc_visp);
-        //std::cout << "wMc:" <<wMc.matrix() << endl;
+        std::cout << "wMc:" <<wMc.matrix() << endl;
 
         // update features
         for (int i = 0; i < n_features; ++i) {
             cp[i] = wMc.inverse() * wp[i];
             cp[i] /= cp[i][2];
-            //pixel_cp[i] = Eigen::Vector2d(cp[i][0], cp[i][1]);
+            cout << "cp: " << cp[i].matrix() << endl;
         }
         // update theta
         cMcd = wMc.inverse() * wMcd;
+        cout << "cMcd: "<< endl;
+        Eigen2Visp(wMcd).print();
+        cout << endl;
+        cout <<"cMcd: " << cMcd.matrix() << std::endl;
         //theta = std::atan2(cMcd.matrix()(2, 1), cMcd.matrix()(2, 2));
-        theta = Eigen::AngleAxisd(cMcd.rotation()).angle();
+        theta = (Eigen::AngleAxisd(cMcd.rotation())).angle();
         task.setTheta(theta);
         cout << "theta: " << theta << endl;
 
@@ -143,13 +148,17 @@ int main(int argc, char **argv)
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
         // plot graph
-        v[0] = v_sixdof[2];   // vz
-        v[1] = v_sixdof[4];   // wy
+        //v[0] = v_sixdof[2];   // vz
+        //v[1] = v_sixdof[4];   // wy
+        v[1] = 0;
 
         //std::cout << "v[0]: " << v[0] << "  v[1]: " << v[1] << endl;
 
         // plot error
         graph.plot(0, n, v);
+
+        //error[1] = 0;
+        //error[2] = 0;
         graph.plot(1, n, error);
 
         // cMcd
@@ -163,12 +172,12 @@ int main(int argc, char **argv)
         graph.plot(3, wMc.matrix()(0,3), world_y);
 
         // whether to stop
-        if(error.sumSquare()< 0.1 && n > 1)
-        {
-            std::cout << "Reached a small error. We stop the loop... " << std::endl;
-            break;
-        }
-        if(n > 500)
+//        if(error.sumSquare()< 0.1 && n > 1)
+//        {
+//            std::cout << "Reached a small error. We stop the loop... " << std::endl;
+//            break;
+//        }
+        if(n > 100)
             break;
         n++;
     }
