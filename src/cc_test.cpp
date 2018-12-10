@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     // INIT wMc, wMcd
     wMc.setIdentity();
     //wMc.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
-    wMc.pretranslate(Eigen::Vector3d(-0.2, 0.1, -4));
+    wMc.pretranslate(Eigen::Vector3d(-0.2, 0.1, -40));
 
     wMcd.setIdentity();
     //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,0,1 )));
@@ -149,8 +149,8 @@ int main(int argc, char **argv)
 
         // plot graph
         //v[0] = v_sixdof[2];   // vz
-        //v[1] = v_sixdof[4];   // wy
-        v[1] = 0;
+        v[1] = v_sixdof[4];   // wy
+        //v[1] = 0;
 
         //std::cout << "v[0]: " << v[0] << "  v[1]: " << v[1] << endl;
 
@@ -171,14 +171,17 @@ int main(int argc, char **argv)
         world_y[0] = wMc.matrix()(2,3);
         graph.plot(3, wMc.matrix()(0,3), world_y);
 
+        //usleep(0.1*1000000);
         // whether to stop
-//        if(error.sumSquare()< 0.1 && n > 1)
-//        {
-//            std::cout << "Reached a small error. We stop the loop... " << std::endl;
-//            break;
-//        }
-        if(n > 100)
+        if(error.sumSquare()< 0.1 && n > 1)
+        {
+            std::cout << "Reached a small error. We stop the loop... " << std::endl;
+            std::cout << "cMcd:" << cMcd.matrix() << std::endl;
+            std::cout << "wMc:" << wMc.matrix() << std::endl;
             break;
+        }
+//        if(n > 5000)
+//            break;
         n++;
     }
 
