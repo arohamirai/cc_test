@@ -24,207 +24,201 @@
 #include <visp3/visual_features/vpFeatureBuilder.h>
 #include <visp3/visual_features/vpFeatureDepth.h>
 #include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/visual_features/vpFeaturePointPolar.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
-#include <visp3/gui/vpPlot.h>
-#include <visp3/vs/vpServo.h>
 #include <visp3/robot/vpSimulatorPioneer.h>
 #include <visp3/robot/vpSimulatorCamera.h>
-#include <visp3/core/vpVelocityTwistMatrix.h>
+#include <visp3/gui/vpPlot.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/gui/vpPlot.h>
+#include <unistd.h>
+
+using namespace std;
 
 int main()
 {
-  try
-  {
-    vpSimulatorCamera robot;
-    robot.setSamplingTime(0.04);
-    robot.setRobotState(vpRobot::STATE_VELOCITY_CONTROL);
-    vpHomogeneousMatrix wMc, wMcd;
-    wMcd[0][3] = 1;
-    wMcd[1][3] = 1;
-    wMcd[2][3] = 1;
-    wMc.buildFrom(1,0,0,vpMath::rad(0),vpMath::rad(0),vpMath::rad(5));
 
-//    wMc[0][3] = 0;
-//    wMc[1][3] = 0;
-//    wMc[2][3] = 1;
+    vpHomogeneousMatrix camera_init_pose_in_world, camera_final_pose_in_world, wMc;
+    vpHomogeneousMatrix cMo, cdMo;
 
-    robot.setPosition(wMc);
+    cdMo[0][3] = 0;
+    cdMo[1][3] = 0;
+    cdMo[2][3] = 1;
+
+    vpTranslationVector t;
+    vpRzyxVector r;
+    t.buildFrom(0, 0, 1);
+    r.buildFrom(vpMath::rad(0), vpMath::rad(0), vpMath::rad(0));
+    camera_init_pose_in_world.buildFrom(t, vpRotationMatrix(r));
+    t.buildFrom(1, 1, 1);
+    r.buildFrom(vpMath::rad(0), vpMath::rad(0), vpMath::rad(0));
+    camera_final_pose_in_world.buildFrom(t, vpRotationMatrix(r));
+
+    cMo = camera_init_pose_in_world.inverse() * camera_final_pose_in_world;
+
+    vpFeaturePoint3D p, pd;
+    p.buildFrom(cMo[0][3], cMo[1][3], 1);
+    pd.buildFrom(cdMo[0][3], cdMo[1][3], 1);
 
     vpServo task;
-    task.setServo(vpServo::EYEINHAND_L_cVe_eJe);
+    task.setServo(vpServo::EYEINHAND_CAMERA);
     task.setInteractionMatrixType(vpServo::MEAN, vpServo::PSEUDO_INVERSE);
-    task.setLambda(0.2);
-
-    vpHomogeneousMatrix cMcd = wMc.inverse() * wMcd;    // eMo
-
-    vpFeaturePoint3D feature_x_y, feature_x_y_d;
-    feature_x_y.buildFrom(cMcd[0][3], cMcd[1][3], 1);
-    feature_x_y_d.buildFrom(0, 0, 1);
-    task.addFeature(feature_x_y, feature_x_y_d,
-                    vpFeaturePoint3D::selectX() | vpFeaturePoint3D::selectY());
-
-
+    task.setLambda(0.5);
+    task.addFeature(p, pd, vpFeaturePoint3D::selectX() | vpFeaturePoint3D::selectY());
 
     vpFeaturePointPolar feature_theta, feature_theta_d;
-    vpColVector px = cMcd.getRotationMatrix().getCol(0);
-    double theta = atan2(px[1], px[0]);
-    double theta_desired = 0;
+    double theta, theta_desired;
+    theta = std::atan2(cMo[1][0], cMo[0][0]);
+    theta_desired = 0;
     feature_theta.set_rhoThetaZ(1, theta, 1);
     feature_theta_d.set_rhoThetaZ(1, theta_desired, 1);
-    task.addFeature(feature_theta, feature_theta_d,
-                                    vpFeaturePointPolar::selectTheta());
+    task.addFeature(feature_theta,feature_theta_d, vpFeaturePointPolar::selectTheta());
 
 
-
-#ifdef VISP_HAVE_DISPLAY
-    // Create a window (800 by 500) at position (400, 10) with 3 graphics
-    vpPlot graph(4, 800, 900, 400, 10, "Curves...");
-
-    // Init the curve plotter
-    graph.initGraph(0, 3);
-    graph.initGraph(1, 3);
-    graph.initGraph(2, 1);
-    graph.initGraph(3, 3);
-    graph.setTitle(0, "Velocities");
-    graph.setTitle(1, "Error s-s*");
-    graph.setTitle(2, "Depth");
-    graph.setTitle(3, "RobotTrajectory");
+    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    graph.initGraph(0, 6);  //v
+    graph.initGraph(1, 1);  //error
+    graph.initGraph(2, 2);  //traj
+    graph.setTitle(0, "vel");
+    graph.setTitle(1, "s - s*");
+    graph.setTitle(2, "traj");
     graph.setLegend(0, 0, "vx");
     graph.setLegend(0, 1, "vy");
-    graph.setLegend(0, 2, "wz");
-    graph.setLegend(1, 0, "x-x*");
-    graph.setLegend(1, 1, "y-y*");
-    graph.setLegend(2, 0, "Z");
-    graph.setLegend(3, 0, "camera");
-    graph.setLegend(3, 1, "object");
-    graph.setLegend(3, 2, "object2");
+    graph.setLegend(0, 2, "vz");
+    graph.setLegend(0, 3, "wx");
+    graph.setLegend(0, 4, "wy");
+    graph.setLegend(0, 5, "wz");
+    graph.setLegend(1, 0, "error");
+    graph.setLegend(2, 0, "x-y");
 
-    // graph.setThickness(3, 2, 10);
 
-    //    std::cout<<"wMo: ("<<wMo[0][3]<<","<<wMo[2][3]<<")"<<std::endl;
-    double cross_size = 1e-1;
-    graph.plot(3, 1, wMcd[0][3] - cross_size, wMcd[1][3] - cross_size);
-    graph.plot(3, 1, wMcd[0][3] + cross_size, wMcd[1][3] + cross_size);
-    graph.plot(3, 1, wMcd[0][3], wMcd[1][3]);
-    graph.plot(3, 1, wMcd[0][3] - cross_size, wMcd[1][3] + cross_size);
-    graph.plot(3, 1, wMcd[0][3] + cross_size, wMcd[1][3] - cross_size);
-
-//    graph.plot(3, 2, wMo2[0][3] - cross_size, wMo2[1][3] - cross_size);
-//    graph.plot(3, 2, wMo2[0][3] + cross_size, wMo2[1][3] + cross_size);
-//    graph.plot(3, 2, wMo2[0][3], wMo2[1][3]);
-//    graph.plot(3, 2, wMo2[0][3] - cross_size, wMo2[1][3] + cross_size);
-//    graph.plot(3, 2, wMo2[0][3] + cross_size, wMo2[1][3] - cross_size);
-#endif
-
-    int iter = 0;
-    int max_iter = 5000;
-    for (; iter < max_iter;)
+    vpSimulatorCamera robot;
+    robot.setSamplingTime(0.040);
+    robot.setRobotState(vpRobot::STATE_VELOCITY_CONTROL);
+    robot.setPosition(camera_init_pose_in_world);
+    for(int iter = 0; iter < 500; iter++)
     {
-//      std::cout << "111" << std::endl;
+        robot.getPosition(wMc);
+        cMo = wMc.inverse() * camera_final_pose_in_world;
 
-      cMcd = wMc.inverse() * wMcd;
-      feature_x_y.buildFrom(cMcd[0][3], cMcd[1][3], 1);
-      feature_x_y_d.buildFrom(0, 0, 1);
+        p.buildFrom(cMo[0][3], cMo[1][3], 1);
+        theta = std::atan2(cMo[1][0], cMo[0][0]);
+        feature_theta.set_rhoThetaZ(1, theta, 1);
 
-      px = cMcd.getRotationMatrix().getCol(0);
-      theta = atan2(px[1], px[0]);
-      feature_theta.set_rhoThetaZ(1, theta, 1);
-      feature_theta_d.set_rhoThetaZ(1, theta_desired, 1);
 
-      vpVelocityTwistMatrix cVe;
-      cVe.eye();
-      task.set_cVe(cVe);
-      vpMatrix eJe(6, 3);
-      eJe = 0;
-      eJe[0][0] = 1;
-      eJe[1][1] = 1;
-      eJe[5][2] = 1;
-      task.set_eJe(eJe);
+        vpVelocityTwistMatrix cVe;
+        cVe.eye();
+        task.set_cVe(cVe);
+        vpMatrix eJe(6, 3);
+        eJe = 0;
+        eJe[0][0] = 1;
+        eJe[1][1] = 1;
+        eJe[5][2] = 1;
+        task.set_eJe(eJe);
 
-      vpColVector v_calc = task.computeControlLaw();
-      // vpColVector v1(2);
-      // v1[0] = 0;
-      // v1[1] = v[0];
-      vpColVector v(6);
-      v[0] = v_calc[0];
-      v[1] = v_calc[1];
-      v[5] = v_calc[2];
-      std::cout << "v_calc:" << v_calc.transpose() << std::endl;
-      std::cout << "v:" << v.transpose() << std::endl;
-      // vpColVector v = task.computeControlLaw(iter*robot.getSamplingTime());
-      robot.setVelocity(vpRobot::CAMERA_FRAME, v);
-      wMc = robot.getPosition();
+        vpColVector v_cal = task.computeControlLaw();
 
-#ifdef VISP_HAVE_DISPLAY
-      graph.plot(0, iter, v_calc); // plot velocities applied to the robot
-      graph.plot(1, iter, task.getError()); // plot error vector
-      // graph.plot(2, 0, iter, Z); // plot the depth
+        vpColVector v(6);
+        v[0] = v_cal[0];
+        v[1] = v_cal[1];
+        //v[5] = v_cal[2];
+        robot.setVelocity(vpRobot::CAMERA_FRAME, v);
 
-      // std::cout << "error: " << task.getError().transpose() << std::endl;
+        vpColVector error = task.getError();
+        vpColVector error_display(1);
+        error_display[0] = error.sumSquare();
 
-      //      std::cout<<"wMc:"<<std::endl;
-      //      wMc.print();
-      //      std::cout<<std::endl;
+        graph.plot(0, iter, v);
+        graph.plot(1, iter, error_display);
+        graph.plot(2, 0, wMc[0][3], wMc[1][3]);
 
-      //      vpColVector error = task.getError();
-      //      std::cout<<"error:\n"<<error<<std::endl;
 
-      //      vpHomogeneousMatrix cMe = robot.get_cMe();
-      //      vpHomogeneousMatrix wMe = wMc*cMe;
+        vpColVector px(4), pz(4), px_w(4);
+        px[0] = 0.1;
+        px[1] = 0;
+        px[2] = 0;
+        px[3] = 1;
+        px_w = wMc * px;
 
-      vpColVector px(4), pz(4), px_w(4);
-      px[0] = 0.1;
-      px[1] = 0;
-      px[2] = 0;
-      px[3] = 1;
+        graph.plot(2, 1, wMc[0][3], wMc[1][3]);
+        graph.plot(2, 1, px_w[0], px_w[1]);
+        graph.plot(2, 1, wMc[0][3], wMc[1][3]);
 
-      //            pz[0] = 0;
-      //            pz[1] = 0;
-      //            pz[2] = 0.3;
-      //            pz[3] = 1;
+        if( error_display[0]< 0.0001)
+        {
+            std::cout << "reach an error, we will stop" << std::endl;
+            break;
+        }
 
-      // px_w = wMc*pz;
-      px_w = wMc * px;
+        usleep(0.1*10e5);
 
-      //      graph.plot(3, 0, wMc[0][3], wMc[2][3]);
-      //      graph.plot(3, 0, px_w[0]/px_w[3], px_w[2]/px_w[3]);
-      //      graph.plot(3, 0, wMc[0][3], wMc[2][3]);
-
-      graph.plot(3, 0, wMc[0][3], wMc[1][3]);
-      graph.plot(3, 0, px_w[0], px_w[1]);
-      graph.plot(3, 0, wMc[0][3], wMc[1][3]);
-
-#endif
-
-      iter++;
-
-      if (task.getError().sumSquare() < 0.0001)
-      {
-        std::cout << "Reached a small error. We stop the loop... " << std::endl;
-        break;
-      }
-
-      vpTime::sleepMs(10);
     }
-    task.print();
 
-#ifdef VISP_HAVE_DISPLAY
-    graph.saveData(0, "./v2.dat");
-    graph.saveData(1, "./error2.dat");
-    graph.saveData(2, "./depth1.dat");
+    getchar();
 
-    const char* legend = "Click to quit...";
-    vpDisplay::displayText(graph.I, (int)graph.I.getHeight() - 60,
-                           (int)graph.I.getWidth() - 150, legend, vpColor::red);
-    vpDisplay::flush(graph.I);
-    vpDisplay::getClick(graph.I);
-#endif
-
-    // Kill the servo task
-    task.kill();
-  }
-  catch (vpException& e)
-  {
-    std::cout << "Catch an exception: " << e << std::endl;
-  }
+//
+//
+//
+//
+//        vpHomogeneousMatrix cdMo(0, 0, 0.75, 0, 0, 0);
+//        vpHomogeneousMatrix cMo(0.15, -0.1, 1., vpMath::rad(10), vpMath::rad(-10), vpMath::rad(50));
+//        vpPoint point[4];
+//        point[0].setWorldCoordinates(-0.1, -0.1, 0);
+//        point[1].setWorldCoordinates(0.1, -0.1, 0);
+//        point[2].setWorldCoordinates(0.1, 0.1, 0);
+//        point[3].setWorldCoordinates(-0.1, 0.1, 0);
+//        vpServo task;
+//        task.setServo(vpServo::EYEINHAND_CAMERA);
+//        task.setInteractionMatrixType(vpServo::CURRENT);
+//        task.setLambda(0.5);
+//        vpFeaturePoint p[4], pd[4];
+//        for (unsigned int i = 0; i < 4; i++) {
+//            point[i].track(cdMo);
+//            vpFeatureBuilder::create(pd[i], point[i]);
+//            point[i].track(cMo);
+//            vpFeatureBuilder::create(p[i], point[i]);
+//            task.addFeature(p[i], pd[i]);
+//        }
+//        vpHomogeneousMatrix wMc, wMo;
+//        vpSimulatorCamera robot;
+//        robot.setSamplingTime(0.040);
+//        robot.getPosition(wMc);
+//
+//        wMo = wMc * cMo;
+//
+//        //return 0;
+//
+//
+//        vpPlot graph(1, 800, 500, 400, 10, "Curves...");
+//
+//        graph.initGraph(0, 6); // v. w
+//        //graph.initRange(0, 0, 15, 0, 1);
+//        graph.setTitle(0, "traj");
+//        graph.setLegend(0, 0, "vx");
+//        graph.setLegend(0, 1, "vy");
+//        graph.setLegend(0, 2, "vz");
+//        graph.setLegend(0, 3, "wx");
+//        graph.setLegend(0, 4, "wy");
+//        graph.setLegend(0, 5, "wz");
+//
+//
+//
+//        for (unsigned int iter = 0; iter < 150; iter++) {
+//            robot.getPosition(wMc);
+//            cMo = wMc.inverse() * wMo;
+//            for (unsigned int i = 0; i < 4; i++) {
+//                point[i].track(cMo);
+//                vpFeatureBuilder::create(p[i], point[i]);
+//            }
+//            vpColVector v = task.computeControlLaw();
+//            robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+//
+//            graph.plot(0, iter, v);
+//            //std::cout << v.size();
+//
+//
+//        }
+//        task.kill();
+//    getchar();
 }
