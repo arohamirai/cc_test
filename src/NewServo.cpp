@@ -32,7 +32,7 @@ void NewServo::addFeature(Eigen::Vector3d &s, Eigen::Vector3d &s_star)
 
 }
 vpColVector NewServo::computeControlLaw() {
-    vpColVector v(6);
+    vpColVector v(6, 0);
     int n = featureList.size();
 
     if(!initialize)
@@ -57,7 +57,7 @@ vpColVector NewServo::computeControlLaw() {
         e[3*i + 2] = (rhoList[i][1] + rhoDesiredList[i][0] * std::sin(theta)
                 - rhoDesiredList[i][1] * std::cos(theta));
 
-        //*
+        /*
         std::cout<< "rhoList: "<< rhoList[i][0] << "  " << rhoList[i][1]
         <<" ||| " << rhoDesiredList[i][0] << "  " <<rhoDesiredList[i][1] << std::endl;
         std::cout<< "e: "<< e[3*i ] << "  " << e[3*i + 1]
@@ -67,10 +67,10 @@ vpColVector NewServo::computeControlLaw() {
     }
 
     for (int i = 0; i < n; ++i) {
-        v[4] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
+        //[4] += k0 * e[3*i] - lamda * std::exp(-alpha * time_elapse);
+        v[4] += k0 * theta - lamda * std::exp(-alpha * time_elapse);
     }
     v[4] /= n;
-    std::cout << " v[4]:" << v[4] << std::endl;
     for (int i = 0; i < n; ++i) {
         double r1, r2;
         r1 = e[3 * i + 2];
@@ -78,9 +78,6 @@ vpColVector NewServo::computeControlLaw() {
         v[2] += k1 * r1 + k2 * r2;
     }
     v[2] /= n;
-    std::cout << "v[2]: " << v[2] << std::endl;
-
-
     iteration++;
     return v;
 }
