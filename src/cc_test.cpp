@@ -1,75 +1,207 @@
 #include <iostream>
-#include <opencv2/core/core.hpp>
-#include <ceres/ceres.h>
-#include <chrono>
+#include <opencv2/opencv.hpp>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpVelocityTwistMatrix.h>
+#include <visp3/gui/vpPlot.h>
+#include <visp3/robot/vpSimulatorPioneer.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeatureDepth.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/vs/vpServo.h>
+#include "NewServo.h"
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpProjectionDisplay.h>
 
 using namespace std;
 
-// 代价函数计算模型
-struct CURVE_FITTING_COST
-{
-  CURVE_FITTING_COST(double x, double y) : _x(x), _y(y){}
-  //残差的计算
-  template <typename T>
-  bool operator ()  (
-      const T* const abc,             // 模型参数，有3维
-      T* residual ) const             //残差
-  {
-    // y - exp(ax^2 + bx + c)
-    residual[0] = T(_y) - ceres::exp(abc[0] * T(_x) * T(_x) + abc[1] * T(_x) + abc[2]);
-    return true;
-  }
 
-  const double _x, _y;                // x, y数据
-};
+vpHomogeneousMatrix Eigen2Visp(Eigen::Affine3d& m)
+{
+    vpHomogeneousMatrix m_;
+    m_.eye();
+    for(int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; ++j) {
+            m_[i][j] = m.matrix()(i, j);
+        }
+    return m_;
+}
+
+Eigen::Affine3d Visp2Eigen(vpHomogeneousMatrix& m)
+{
+    Eigen::Affine3d m_;
+    m_.Identity();
+    for(int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; ++j) {
+            m_.matrix()(i, j) = m[i][j];
+        }
+    return m_;
+}
 
 int main(int argc, char **argv)
 {
-  double a = 1.0, b = 2.0, c = 1.0; // 真实参数值
-  int N = 100;                      // 数据点个数(样本点)
-  double w_sigma = 1.0;             // 噪声Sigma值
-  cv::RNG rng;                      // OpenCV随机数产生器
-  double abc[3] = {0, 0, 0};        // abc参数的估计值（初始值）
+    double lamda = -0.10;
+    double alpha = 0.07;
+    double k0 = 0.13;
 
-  vector<double> x_data, y_data;            // 样本数据
-  cout << "generating data: " << endl;
-  for(int i = 0; i <N; i++)
-  {
-    double x = i / 100.0;
-    x_data.push_back(x);
-    y_data.push_back(exp(a * x * x + b * x + c) + rng.gaussian(w_sigma));
-  }
+    double k1 = 0.0995;
+    double k2 = 0.1050;
+    double period = 0.1;
+    double theta;
 
-  // 构建最小二乘问题
-  ceres::Problem problem;
-  for(int i = 0; i < N; i++)
-  {
-    problem.AddResidualBlock(    // 向问题中添加误差项
-          // 使用自动求导， 模板参数： 误差类型， 输出维度，输入维度
-          new ceres::AutoDiffCostFunction<CURVE_FITTING_COST, 1, 3>(
-            new CURVE_FITTING_COST(x_data[i], y_data[i])),
-          nullptr,
-          abc
-          );
-  }
+    Eigen::Vector3d wp[3], cp[3], cdp[3];
+    int n_features = 1;
+    Eigen::Affine3d wMc, wMcd;
+    Eigen::Affine3d cMcd;
+    vpHomogeneousMatrix wMc_visp;
 
-  // 配置求解器
-  ceres::Solver::Options options;                       // 这里有许多配置可填
-  options.linear_solver_type = ceres::DENSE_QR;         // 增量方程如何求解
-  options.minimizer_progress_to_stdout = true;          // 输出到cout
+    wp[0] = Eigen::Vector3d( 0., 0.2, 4.1);
+    wp[1] = Eigen::Vector3d( 0.5, 0.1, 8.2);
+    wp[2] = Eigen::Vector3d( 0.9, 0.5, 8.3);
 
-  ceres::Solver::Summary summary;                       // 优化信息
-  chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-  ceres::Solve(options, &problem, &summary);            // 开始优化
-  chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
-  chrono::duration<double> time_used = chrono::duration_cast<chrono::duration<double>>(t2 - t1);
-  cout << "solve time cost = " << time_used.count() << " seconds. " <<endl;
+    // INIT wMc, wMcd
+    wMc.setIdentity();
+    //wMc.prerotate(Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
+    wMc.pretranslate(Eigen::Vector3d(0.2, 0.1, 2));
 
-  // 输出结果
-  cout << summary.BriefReport() << endl;
-  cout << "estimate a, b, c = ";
-  for(auto a:abc)   cout << a << " ";
-  cout << endl;
+    wMcd.setIdentity();
+    //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,0,1 )));
+    wMcd.prerotate(Eigen::AngleAxisd(-M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
+    wMcd.pretranslate(Eigen::Vector3d(0.2, 0.1, 4));
 
-  return 0;
+    // Init servo
+    NewServo task(lamda, alpha, k0,  k1, k2, period);
+    // addFeature(points in camera, normalized)
+    for (int i = 0; i < n_features; ++i) {
+        cp[i] = wMc.inverse() * wp[i];
+        cp[i] /= cp[i][2];
+        cdp[i] = wMcd.inverse() * wp[i];
+        cdp[i] /= cdp[i][2];
+        task.addFeature(cp[i], cdp[i]);
+    }
+
+    // init robot
+    vpSimulatorCamera robot;
+    robot.setSamplingTime(period);
+    robot.setPosition(Eigen2Visp(wMc));
+
+    // init graph
+    vpPlot graph(4, 800, 1000);
+    graph.initGraph(0, 2); // v. w
+    graph.initGraph(1, 3*n_features); // error
+    graph.initGraph(2, 1);   // cMo
+    graph.initGraph(3, 2);   // wMc
+    graph.setTitle(0, "Velocities");
+    graph.setTitle(1, "Error s-s*");
+    graph.setTitle(2, "oMc");
+    graph.setTitle(3, "wMc");
+
+//    graph.initRange(2, -1, 1, -5, 5);
+//    graph.initRange(3, -1, 1, -5, 5);
+
+    graph.setLegend(0, 0, "vz");
+    graph.setLegend(0, 1, "wy");
+    for (int i = 0; i < n_features; ++i) {
+        graph.setLegend(1, 3*i, string("e0_" + to_string(i)));
+        graph.setLegend(1, 3*i+1, string("e1_" + to_string(i)));
+        graph.setLegend(1, 3*i+2, string("e2_" + to_string(i)));
+    }
+
+    graph.setLegend(3, 0, "traj");
+    graph.setLegend(3, 1, "heading");
+    int n = 0;
+    vpColVector error;
+    vpColVector v(2);
+    while(true)
+    {
+        robot.getPosition(wMc_visp);
+        wMc = Visp2Eigen(wMc_visp);
+
+        // update features
+        for (int i = 0; i < n_features; ++i) {
+            cp[i] = wMc.inverse() * wp[i];
+            cp[i] /= cp[i][2];
+        }
+        // update theta
+        cMcd = wMc.inverse() * wMcd;
+
+        cout << "wMcd: \n";
+        cout << wMcd.matrix()<< endl;
+        cout << "wMc: \n";
+        cout << wMc.matrix()<< endl;
+        cout << "cMcd: \n";
+        cout << cMcd.matrix()<< endl;
+        //getchar();
+
+        Eigen::Vector3d euler_angles = cMcd.rotation().eulerAngles ( 2, 1, 0);
+        theta = euler_angles[1];
+
+        task.setTheta(theta);
+        cout << "theta: " << theta << endl;
+        //return 0;
+
+        // get velocity
+        vpColVector v_sixdof;
+        v_sixdof = task.computeControlLaw();
+        error = task.getError();
+        // publish vel
+        robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
+
+        // plot graph
+        v[0] = v_sixdof[2];   // vz
+        v[1] = v_sixdof[4] * 10;   // wy
+
+
+        graph.plot(0, n, v);
+
+        // plot error
+        graph.plot(1, n, error);
+
+        // cdMc
+        //graph.plot(2, 0, cMcd.inverse()(0,3), cMcd.inverse()(2,3));       // x,z
+
+        vpColVector e_theta(1);
+        e_theta[0] = theta * 180 / M_PI;
+        graph.plot(2, n, e_theta );
+
+        vpColVector pz(4), pz_w(4);
+        pz[0] = 0.1;
+        pz[1] = 0;
+        pz[2] = 0;
+        pz[3] = 1;
+
+        pz_w = Eigen2Visp(wMc) * pz;
+
+        cout << wMc.matrix()<<endl;
+        cout << pz_w[0] << " " << pz_w[1] << " " << pz_w[2] << " " << pz_w[3] <<endl;
+        //return 0;
+
+//        graph.plot(3, 1, wMc(0, 3), wMc(2,3));
+//        graph.plot(3, 1, pz_w[0], pz_w[2]);
+//        graph.plot(3, 1, wMc(0, 3), wMc(2,3));
+
+        // wMc
+        graph.plot(3, 0, wMc.matrix()(0,3), wMc.matrix()(2,3));     // x, z
+
+        //getchar();
+        usleep(0.1*1000000);
+        // whether to stop
+        if(error.sumSquare()< 0.001 && n > 1)
+        {
+            std::cout << "Reached a small error. We stop the loop... " << std::endl;
+            std::cout << "cMcd:" << cMcd.matrix() << std::endl;
+            std::cout << "wMc:" << wMc.matrix() << std::endl;
+            break;
+        }
+//        if(n > 5000)
+//            break;
+        n++;
+    }
+
+    getchar();
+    return 0;
 }
