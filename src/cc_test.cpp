@@ -78,10 +78,8 @@ int main(int argc, char **argv)
     // addFeature(points in camera, normalized)
     for (int i = 0; i < n_features; ++i) {
         cp[i] = wMc.inverse() * wp[i];
-        cp[i] /= cp[i][2];
         cdp[i] = wMcd.inverse() * wp[i];
-        cdp[i] /= cdp[i][2];
-        task.addFeature(cp[i], cdp[i]);
+        task.addFeature(cp[i], cdp[i], NewServo::SELECT_ZX);
     }
 
     // init robot
@@ -124,7 +122,6 @@ int main(int argc, char **argv)
         // update features
         for (int i = 0; i < n_features; ++i) {
             cp[i] = wMc.inverse() * wp[i];
-            cp[i] /= cp[i][2];
         }
         // update theta
         cMcd = wMc.inverse() * wMcd;
@@ -145,10 +142,12 @@ int main(int argc, char **argv)
         //return 0;
 
         // get velocity
-        vpColVector v_sixdof;
-        v_sixdof = task.computeControlLaw();
+        vpColVector vel, v_sixdof(6);
+        vel = task.computeControlLaw();
         error = task.getError();
         // publish vel
+        v_sixdof[2] = vel[0];
+        v_sixdof[4] = vel[1];
         robot.setVelocity(vpRobot::CAMERA_FRAME, v_sixdof);
 
         // plot graph
@@ -188,7 +187,7 @@ int main(int argc, char **argv)
         graph.plot(3, 0, wMc.matrix()(0,3), wMc.matrix()(2,3));     // x, z
 
         //getchar();
-        usleep(0.1*1000000);
+        //usleep(0.1*1000000);
         // whether to stop
         if(error.sumSquare()< 0.001 && n > 1)
         {

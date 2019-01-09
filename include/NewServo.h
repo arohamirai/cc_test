@@ -19,20 +19,24 @@
 class NewServo {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
+    enum {
+        SELECT_XY, SELECT_XZ, SELECT_ZX, SELECT_ZY
+    };
     NewServo(double _lamda, double alpha, double k_0, double k_1, double k_2,
             double _period);
     ~NewServo();
 
     vpColVector computeControlLaw();
     vpColVector getError();
-    void addFeature(Eigen::Vector3d &s, Eigen::Vector3d &s_star);
+    void addFeature( Eigen::Vector3d &s,  Eigen::Vector3d &s_star, const unsigned int select);
 
     void setTheta(double _theta);
 
 private:
-    std::vector<Eigen::Vector3d *> featureList;
-    std::vector<Eigen::Vector3d *> desiredFeatureList;
+    std::vector< Eigen::Vector3d * > featureList;
+    std::vector< Eigen::Vector3d * > desiredFeatureList;
+
+    int select_type_;
 
     std::vector<Eigen::Vector2d> rhoList;
     std::vector<Eigen::Vector2d> rhoDesiredList;
