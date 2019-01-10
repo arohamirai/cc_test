@@ -16,7 +16,7 @@
 #include <visp3/gui/vpDisplayOpenCV.h>
 #include <visp3/gui/vpDisplayX.h>
 #include <visp3/gui/vpProjectionDisplay.h>
-
+#include <opencv2/opencv.hpp>
 using namespace std;
 
 
@@ -53,6 +53,7 @@ int main(int argc, char **argv)
     double period = 0.1;
     double theta;
 
+    cv::RNG rng;
     Eigen::Vector3d wp[3], cp[3], cdp[3];
     int n_features = 1;
     Eigen::Affine3d wMc, wMcd;
@@ -70,15 +71,16 @@ int main(int argc, char **argv)
 
     wMcd.setIdentity();
     //wMcd.prerotate(Eigen::AngleAxisd(M_PI / 2, Eigen::Vector3d ( 0,0,1 )));
-    wMcd.prerotate(Eigen::AngleAxisd(-M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
+    //wMcd.prerotate(Eigen::AngleAxisd(-M_PI / 4, Eigen::Vector3d ( 0,1,0 )));
     wMcd.pretranslate(Eigen::Vector3d(0.2, 0.1, 4));
 
     // Init servo
     NewServo task(lamda, alpha, k0,  k1, k2, period);
     // addFeature(points in camera, normalized)
     for (int i = 0; i < n_features; ++i) {
-        cp[i] = wMc.inverse() * wp[i];
-        cdp[i] = wMcd.inverse() * wp[i];
+        Eigen::Vector3d chaos = Eigen::Vector3d(rng.uniform(0., 0.01), rng.uniform(0., 0.01), rng.uniform(0., 0.01));
+        cp[i] = wMc.inverse() * (wp[i] + chaos);
+        cdp[i] = wMcd.inverse() * (wp[i] + chaos);
         task.addFeature(cp[i], cdp[i], NewServo::SELECT_ZX);
     }
 
@@ -121,17 +123,18 @@ int main(int argc, char **argv)
 
         // update features
         for (int i = 0; i < n_features; ++i) {
-            cp[i] = wMc.inverse() * wp[i];
+            Eigen::Vector3d chaos = Eigen::Vector3d(rng.uniform(0., 0.01), rng.uniform(0., 0.01), rng.uniform(0., 0.01));
+            cp[i] = wMc.inverse() * (wp[i] + chaos);
         }
         // update theta
         cMcd = wMc.inverse() * wMcd;
-
-        cout << "wMcd: \n";
-        cout << wMcd.matrix()<< endl;
-        cout << "wMc: \n";
-        cout << wMc.matrix()<< endl;
-        cout << "cMcd: \n";
-        cout << cMcd.matrix()<< endl;
+//
+//        cout << "wMcd: \n";
+//        cout << wMcd.matrix()<< endl;
+//        cout << "wMc: \n";
+//        cout << wMc.matrix()<< endl;
+//        cout << "cMcd: \n";
+//        cout << cMcd.matrix()<< endl;
         //getchar();
 
         Eigen::Vector3d euler_angles = cMcd.rotation().eulerAngles ( 2, 1, 0);
@@ -175,8 +178,8 @@ int main(int argc, char **argv)
 
         pz_w = Eigen2Visp(wMc) * pz;
 
-        cout << wMc.matrix()<<endl;
-        cout << pz_w[0] << " " << pz_w[1] << " " << pz_w[2] << " " << pz_w[3] <<endl;
+        //cout << wMc.matrix()<<endl;
+        //cout << pz_w[0] << " " << pz_w[1] << " " << pz_w[2] << " " << pz_w[3] <<endl;
         //return 0;
 
 //        graph.plot(3, 1, wMc(0, 3), wMc(2,3));
@@ -184,7 +187,7 @@ int main(int argc, char **argv)
 //        graph.plot(3, 1, wMc(0, 3), wMc(2,3));
 
         // wMc
-        graph.plot(3, 0, wMc.matrix()(0,3), wMc.matrix()(2,3));     // x, z
+        //graph.plot(3, 0, wMc.matrix()(0,3), wMc.matrix()(2,3));     // x, z
 
         //getchar();
         //usleep(0.1*1000000);
