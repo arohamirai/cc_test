@@ -1,75 +1,224 @@
+/*!
+  \example tutorial-simu-pioneer.cpp
+
+  Example that shows how to simulate a visual servoing on a Pioneer mobile robot
+  equipped with a camera.
+  The current visual features that are used are s = (x, log(Z/Z*)). The desired
+  one are s* = (x*, 0), with:
+  - x the abscisse of the point measured at each iteration
+  - x* the desired abscisse position of the point (x* = 0)
+  - Z the depth of the point measured at each iteration
+  - Z* the desired depth of the point equal to the initial one.
+
+  The degrees of freedom that are controlled are (vx, wz), where wz is the
+  rotational velocity
+  and vx the translational velocity of the mobile platform at point M located at
+  the middle
+  between the two wheels.
+
+  The feature x allows to control wy, while log(Z/Z*) allows to control vz.
+
+  */
 #include <iostream>
-#include <opencv2/core/core.hpp>
-#include <ceres/ceres.h>
-#include <chrono>
+
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeatureDepth.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/visual_features/vpFeaturePointPolar.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/robot/vpSimulatorPioneer.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/gui/vpPlot.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/gui/vpPlot.h>
+#include <unistd.h>
 
 using namespace std;
 
-// 代价函数计算模型
-struct CURVE_FITTING_COST
+int main()
 {
-  CURVE_FITTING_COST(double x, double y) : _x(x), _y(y){}
-  //残差的计算
-  template <typename T>
-  bool operator ()  (
-      const T* const abc,             // 模型参数，有3维
-      T* residual ) const             //残差
-  {
-    // y - exp(ax^2 + bx + c)
-    residual[0] = T(_y) - ceres::exp(abc[0] * T(_x) * T(_x) + abc[1] * T(_x) + abc[2]);
-    return true;
-  }
 
-  const double _x, _y;                // x, y数据
-};
+    vpHomogeneousMatrix camera_init_pose_in_world, camera_final_pose_in_world, wMc;
+    vpHomogeneousMatrix cMo, cdMo;
 
-int main(int argc, char **argv)
-{
-  double a = 1.0, b = 2.0, c = 1.0; // 真实参数值
-  int N = 100;                      // 数据点个数(样本点)
-  double w_sigma = 1.0;             // 噪声Sigma值
-  cv::RNG rng;                      // OpenCV随机数产生器
-  double abc[3] = {0, 0, 0};        // abc参数的估计值（初始值）
+    cdMo[0][3] = 0;
+    cdMo[1][3] = 0;
+    cdMo[2][3] = 1;
 
-  vector<double> x_data, y_data;            // 样本数据
-  cout << "generating data: " << endl;
-  for(int i = 0; i <N; i++)
-  {
-    double x = i / 100.0;
-    x_data.push_back(x);
-    y_data.push_back(exp(a * x * x + b * x + c) + rng.gaussian(w_sigma));
-  }
+    vpTranslationVector t;
+    vpRzyxVector r;
+    t.buildFrom(0, 0, 1);
+    r.buildFrom(vpMath::rad(0), vpMath::rad(0), vpMath::rad(0));
+    camera_init_pose_in_world.buildFrom(t, vpRotationMatrix(r));
+    t.buildFrom(1, 1, 1);
+    r.buildFrom(vpMath::rad(0), vpMath::rad(0), vpMath::rad(0));
+    camera_final_pose_in_world.buildFrom(t, vpRotationMatrix(r));
 
-  // 构建最小二乘问题
-  ceres::Problem problem;
-  for(int i = 0; i < N; i++)
-  {
-    problem.AddResidualBlock(    // 向问题中添加误差项
-          // 使用自动求导， 模板参数： 误差类型， 输出维度，输入维度
-          new ceres::AutoDiffCostFunction<CURVE_FITTING_COST, 1, 3>(
-            new CURVE_FITTING_COST(x_data[i], y_data[i])),
-          nullptr,
-          abc
-          );
-  }
+    cMo = camera_init_pose_in_world.inverse() * camera_final_pose_in_world;
 
-  // 配置求解器
-  ceres::Solver::Options options;                       // 这里有许多配置可填
-  options.linear_solver_type = ceres::DENSE_QR;         // 增量方程如何求解
-  options.minimizer_progress_to_stdout = true;          // 输出到cout
+    vpFeaturePoint3D p, pd;
+    p.buildFrom(cMo[0][3], cMo[1][3], 1);
+    pd.buildFrom(cdMo[0][3], cdMo[1][3], 1);
 
-  ceres::Solver::Summary summary;                       // 优化信息
-  chrono::steady_clock::time_point t1 = chrono::steady_clock::now();
-  ceres::Solve(options, &problem, &summary);            // 开始优化
-  chrono::steady_clock::time_point t2 = chrono::steady_clock::now();
-  chrono::duration<double> time_used = chrono::duration_cast<chrono::duration<double>>(t2 - t1);
-  cout << "solve time cost = " << time_used.count() << " seconds. " <<endl;
+    vpServo task;
+    task.setServo(vpServo::EYEINHAND_CAMERA);
+    task.setInteractionMatrixType(vpServo::MEAN, vpServo::PSEUDO_INVERSE);
+    task.setLambda(0.5);
+    task.addFeature(p, pd, vpFeaturePoint3D::selectX() | vpFeaturePoint3D::selectY());
 
-  // 输出结果
-  cout << summary.BriefReport() << endl;
-  cout << "estimate a, b, c = ";
-  for(auto a:abc)   cout << a << " ";
-  cout << endl;
+    vpFeaturePointPolar feature_theta, feature_theta_d;
+    double theta, theta_desired;
+    theta = std::atan2(cMo[1][0], cMo[0][0]);
+    theta_desired = 0;
+    feature_theta.set_rhoThetaZ(1, theta, 1);
+    feature_theta_d.set_rhoThetaZ(1, theta_desired, 1);
+    task.addFeature(feature_theta,feature_theta_d, vpFeaturePointPolar::selectTheta());
 
-  return 0;
+
+    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    graph.initGraph(0, 6);  //v
+    graph.initGraph(1, 1);  //error
+    graph.initGraph(2, 2);  //traj
+    graph.setTitle(0, "vel");
+    graph.setTitle(1, "s - s*");
+    graph.setTitle(2, "traj");
+    graph.setLegend(0, 0, "vx");
+    graph.setLegend(0, 1, "vy");
+    graph.setLegend(0, 2, "vz");
+    graph.setLegend(0, 3, "wx");
+    graph.setLegend(0, 4, "wy");
+    graph.setLegend(0, 5, "wz");
+    graph.setLegend(1, 0, "error");
+    graph.setLegend(2, 0, "x-y");
+
+
+    vpSimulatorCamera robot;
+    robot.setSamplingTime(0.040);
+    robot.setRobotState(vpRobot::STATE_VELOCITY_CONTROL);
+    robot.setPosition(camera_init_pose_in_world);
+    for(int iter = 0; iter < 500; iter++)
+    {
+        robot.getPosition(wMc);
+        cMo = wMc.inverse() * camera_final_pose_in_world;
+
+        p.buildFrom(cMo[0][3], cMo[1][3], 1);
+        theta = std::atan2(cMo[1][0], cMo[0][0]);
+        feature_theta.set_rhoThetaZ(1, theta, 1);
+
+
+        vpVelocityTwistMatrix cVe;
+        cVe.eye();
+        task.set_cVe(cVe);
+        vpMatrix eJe(6, 3);
+        eJe = 0;
+        eJe[0][0] = 1;
+        eJe[1][1] = 1;
+        eJe[5][2] = 1;
+        task.set_eJe(eJe);
+
+        vpColVector v_cal = task.computeControlLaw();
+
+        vpColVector v(6);
+        v[0] = v_cal[0];
+        v[1] = v_cal[1];
+        //v[5] = v_cal[2];
+        robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+
+        vpColVector error = task.getError();
+        vpColVector error_display(1);
+        error_display[0] = error.sumSquare();
+
+        graph.plot(0, iter, v);
+        graph.plot(1, iter, error_display);
+        graph.plot(2, 0, wMc[0][3], wMc[1][3]);
+
+
+        vpColVector px(4), pz(4), px_w(4);
+        px[0] = 0.1;
+        px[1] = 0;
+        px[2] = 0;
+        px[3] = 1;
+        px_w = wMc * px;
+
+        graph.plot(2, 1, wMc[0][3], wMc[1][3]);
+        graph.plot(2, 1, px_w[0], px_w[1]);
+        graph.plot(2, 1, wMc[0][3], wMc[1][3]);
+
+        if( error_display[0]< 0.0001)
+        {
+            std::cout << "reach an error, we will stop" << std::endl;
+            break;
+        }
+
+        usleep(0.1*10e5);
+
+    }
+
+    getchar();
+
+//
+//
+//
+//
+//        vpHomogeneousMatrix cdMo(0, 0, 0.75, 0, 0, 0);
+//        vpHomogeneousMatrix cMo(0.15, -0.1, 1., vpMath::rad(10), vpMath::rad(-10), vpMath::rad(50));
+//        vpPoint point[4];
+//        point[0].setWorldCoordinates(-0.1, -0.1, 0);
+//        point[1].setWorldCoordinates(0.1, -0.1, 0);
+//        point[2].setWorldCoordinates(0.1, 0.1, 0);
+//        point[3].setWorldCoordinates(-0.1, 0.1, 0);
+//        vpServo task;
+//        task.setServo(vpServo::EYEINHAND_CAMERA);
+//        task.setInteractionMatrixType(vpServo::CURRENT);
+//        task.setLambda(0.5);
+//        vpFeaturePoint p[4], pd[4];
+//        for (unsigned int i = 0; i < 4; i++) {
+//            point[i].track(cdMo);
+//            vpFeatureBuilder::create(pd[i], point[i]);
+//            point[i].track(cMo);
+//            vpFeatureBuilder::create(p[i], point[i]);
+//            task.addFeature(p[i], pd[i]);
+//        }
+//        vpHomogeneousMatrix wMc, wMo;
+//        vpSimulatorCamera robot;
+//        robot.setSamplingTime(0.040);
+//        robot.getPosition(wMc);
+//
+//        wMo = wMc * cMo;
+//
+//        //return 0;
+//
+//
+//        vpPlot graph(1, 800, 500, 400, 10, "Curves...");
+//
+//        graph.initGraph(0, 6); // v. w
+//        //graph.initRange(0, 0, 15, 0, 1);
+//        graph.setTitle(0, "traj");
+//        graph.setLegend(0, 0, "vx");
+//        graph.setLegend(0, 1, "vy");
+//        graph.setLegend(0, 2, "vz");
+//        graph.setLegend(0, 3, "wx");
+//        graph.setLegend(0, 4, "wy");
+//        graph.setLegend(0, 5, "wz");
+//
+//
+//
+//        for (unsigned int iter = 0; iter < 150; iter++) {
+//            robot.getPosition(wMc);
+//            cMo = wMc.inverse() * wMo;
+//            for (unsigned int i = 0; i < 4; i++) {
+//                point[i].track(cMo);
+//                vpFeatureBuilder::create(p[i], point[i]);
+//            }
+//            vpColVector v = task.computeControlLaw();
+//            robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+//
+//            graph.plot(0, iter, v);
+//            //std::cout << v.size();
+//
+//
+//        }
+//        task.kill();
+//    getchar();
 }
