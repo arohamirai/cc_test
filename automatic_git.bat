@@ -13,5 +13,3 @@ git status
 git add .
 git commit -m "auto_backup %dd:/=-% %tt%"
 git push origin master
-
-pause
