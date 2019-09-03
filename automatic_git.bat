@@ -7,7 +7,6 @@ echo =======================================================
 echo          Starting automatic git commit push
 echo =======================================================
 REM change file directory
-cd C:\Users\lf\Desktop\cc_test
 REM start git script 
 echo %~dp0
 git status
